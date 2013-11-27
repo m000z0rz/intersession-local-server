@@ -7,7 +7,8 @@ var serialport = require("serialport");
 var SerialPort = serialport.SerialPort;
 
 var mongo = require('mongoskin');
-var mongoskinstore = require('mongoskinstore');
+//var mongoskinstore = require('mongoskinstore');
+var mongoskinstore = require('./mongoskinstore');
 var mongodb = mongo.db('mongodb://admin:' + process.env['ROLLERBOTPASSWORD'] + '@paulo.mongohq.com:10018/rollerbot_test');
 var mongoStore = new mongoskinstore({db: mongodb});
 
