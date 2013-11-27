@@ -1,0 +1,21 @@
+{
+  "name": "localRollerServer",
+  "version": "0.0.1",
+  "description": "Local server for Intersession 2014",
+  "main": "server.js",
+  "dependencies": {
+    "express": "~3.4.4",
+    "mongoskinstore": "~0.4.3",
+    "mongoskin": "~0.6.0",
+    "my-local-ip": "~1.0.0",
+    "serialport": "~1.2.4",
+    "socket.io": "~0.9.16",
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "BSD-2-Clause"
+}

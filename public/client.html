@@ -1,0 +1,1193 @@
+<html>
+<head>
+	<title>RollerBot control</title>
+
+	<style type="text/css">
+
+		body {
+			font-family: "Helvetica Neue", Helvetica, Arial, sans serif;
+			font-size: 14px;
+			
+			color: #333333;
+		}
+
+		.menu {
+			width: 100%;
+			max-width: 600px;
+			padding: 5px;
+			margin-left: auto;
+			margin-right: auto;
+		}
+
+		.full {
+			overflow: auto;
+			position: absolute;
+			top: 0px;
+			left: 0px;
+			right: 0px;
+			bottom: 0px;
+		}
+
+		.fullstripe {
+			overflow: auto;
+			position: absolute;
+			top: 0px;
+			left: 0px;
+			right: 0px;
+			bottom: 0px;
+			max-width: 600px;
+			margin-left: auto;
+			margin-right: auto;
+		}
+
+		.terminal {
+			word-wrap: break-word;
+			overflow-x: hidden;
+			overflow-y: scroll;
+		}
+
+		h1, h2, h3, h4, h5, h6 {
+			font-weight: bold;
+			margin: 3px;
+		}
+
+		h1 {
+			padding: 10px;
+		}
+
+		small {
+			font-size: 0.75em;
+		}
+
+		.sub {
+			margin-left: 10px;
+		}
+
+		ul {
+			list-style-type: none;
+			padding: 0px;
+			margin: 0px;
+		}
+
+		ul li {
+			padding: 10px;
+			margin: 2px;
+			border: 1px solid #e1e1e8;
+			border-radius: 3px;
+		}
+
+
+		ul li.even {
+			background-color: #e7e7e9;
+		}
+
+		ul li.odd {
+			background-color: #f7f7f9;
+		}
+
+		ul li.clickable:hover {
+			background-color: #ffffff;
+			cursor: pointer;
+		}
+
+		input {
+			border: 1px solid #e1e1e8;
+			border-radius: 3px;
+			font-size: 1em;
+			color: inherit;
+			font-family: inherit;
+		}
+
+		.titleBar {
+			background-color: #f7f7f9;
+			border-bottom: 1px solid #e1e1e8
+		}
+
+		.titleIconButton {
+			float: right;
+			padding: 2px;
+			padding-left: 10px;
+			padding-right: 10px;
+			margin: 2px;
+			border: 1px solid #e1e1e8;
+			border-radius: 3px;
+			background-color: #e7e7e9;
+			cursor: pointer;
+
+			font-weight: bold;
+			font-size: 1.5em;
+		}
+
+		.titleIconButton:hover {
+			background-color: #ffffff;
+		}
+
+		.titleIconButtonDeactivated {
+			float: right;
+			padding: 2px;
+			padding-left: 10px;
+			padding-right: 10px;
+			margin: 2px;
+			border: 1px solid #e1e1e8;
+			border-radius: 3px;
+			background-color: #e7e7e9;
+			cursor: default;
+
+			color: #e1e1e8;
+			font-weight: bold;
+			font-size: 1.5em;
+		}
+
+
+
+		.screen {
+			opacity: 0;
+			display: none;
+			transition: opacity 0.5s;
+			-webkit-transition: opacity 0.5s;
+			-moz-transition: opacity 0.5s;
+		}
+
+		.draggable {
+			cursor: move;
+		}
+
+
+	</style>
+</head>
+<body>
+
+<div id="main">
+
+	<div id="screenPortSelect" class="screen menu">
+		<div id="portListHeader">
+			<h1>Ports<span id="hostname"></span></h1>
+		</div>
+		<ul id="portList"></ul>
+	</div>
+
+	<div id="screenControlSelect" class="screen menu">
+		<div id="controlSelect">
+			<h1 id="screenControlSelect_COM"></h1>
+			<small class="sub">Microsoft</small>
+		</div>
+		<ul>
+			<li class="odd clickable" id="screenControlSelect_Control"><h2>Control</h2></li>
+			<li class="even clickable" id="screenControlSelect_Edit"><h2>Edit</h2></li>
+			<li class="odd clickable" id="screenControlSelect_Terminal"><h2>Terminal</h2></li>
+			<li class="even"><h2>Bot ID <input type="text" value="01"></input></h2></li>
+		</ul>
+	</div>
+
+
+
+	<div id="screenControl" class="screen full">
+		<div class='titleBar' id='screenControl_titleBar'>
+			<h1 style='display: inline;'>Control</h1>
+			<span id='screenControl_gotoEdit' class='titleIconButton'>Edit</span>
+		</div>
+
+		<svg id='screenControl_svg' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www3.org/1999/xlink' viewbox='0 0 2000 1000'>
+		</svg>
+	</div>
+
+
+
+	<div id="screenEdit" class="screen full">
+		<div class='titleBar' id='screenEdit_titleBar'>
+			<h1 style='display: inline;'>Edit</h1>
+			<span id='screenEdit_gotoControl' class='titleIconButton'>Control</span>
+			<span id='screenEdit_delete' class='titleIconButtonDeactivated'>Delete</span>
+			<span id='screenEdit_properties' class='titleIconButtonDeactivated'>Properties</span>
+			<span id='screenEdit_addControl' class='titleIconButton'>+</span>
+		</div>
+		<!-- right: 0px; top: 20px; -->
+		<div id='screenEdit_addControlMenu'
+			style='position: absolute; border: 1px solid black; border-radius: 3px; display: none; background-color: #ffffff;'>
+			<h1>Controls</h1>
+			<ul id='screenEdit_addControlList'>
+			</ul>
+		</div>
+		<svg id='screenEdit_svg' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewbox='0 0 2000 1000'>
+		</svg>
+	</div>
+
+
+
+	<div id='screenEditProperties' class='screen menu'>
+		<h1 id='screenEditProperties_header'>Properties</h1>
+		<div id='screenEditProperties_div'></div>
+	</div>
+
+
+
+
+	<div id='screenTerminal' class='screen full menu' style='padding: 0px;'>
+		<h1 id='screenTerminal_header'>Terminal</h1>
+		<div id='screenTerminal_terminal' class='terminal'
+				></div>
+		<div id='screenTerminal_footer'
+				style='position: absolute; bottom: 0px; height: 60px; box-sizing: border-box; width: 100%;'>
+			<input id='screenTerminal_input' type='text' style='border: 1px solid #333333; width: 80%;' /> <button id='screenTerminal_send'>Send</button>
+			<br/>
+			<label for='screenTerminal_autoscroll'>Autoscroll</label><input type='checkbox' id='screenTerminal_autoscroll' checked />
+			<span style='padding-left: 40px;'>
+			<label for='screenTerminal_lineEnding'>Send newline (\n) on each send</label>
+			<select id='screenTerminal_lineEnding'>
+				<option value='no' default>No</option>
+				<option value='yes'>Yes</option>
+			</select>
+
+		</div>
+	</div>
+
+
+</div>
+
+<!--<script src="http://localhost:8080/socket.io/socket.io.js"></script>-->
+<script src="/socket.io/socket.io.js"></script>
+<script type='text/javascript' src='/js/EventEmitter-4.0.3.min.js'></script>
+<script type='text/javascript' src='/js/controlDefinitions.js'></script>
+<script type='text/javascript' src='/js/controls.js'></script>
+<script type='text/javascript' src='/js/shortcut.js'></script>
+<script type='text/javascript'>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var hostType = 'web';
+
+//#ADD8E6;
+var Bluetooth = (function() {
+	// defined dynamically based on whether we're communicating with Bluetooth via a web interface or android
+	var Bluetooth = new EventEmitter();
+	Bluetooth.emit = Bluetooth.emitEvent; // alias to match socket.io convention
+
+
+	if(hostType === "web") {
+
+		// web bluetooth ////////////////////////////////////////////////////////////////////////////////////
+		//var socket = new io.Socket('localhost',{
+		//	port: 8080
+		//});
+		//socket.connect(); 
+		//var socket = io.connect('http://' + window.location.host);
+		Bluetooth.isReady = false;
+		var socket = io.connect(window.location.origin);
+
+		socket.on('connect', function () {
+			console.log('bt socket opened');
+			//Bluetooth.isReady = true;
+			//Bluetooth.emit('ready');
+		});
+
+		socket.on('greeting', function(data) {
+			console.log('greeting received from ' + data.hostname);
+			state.hostname = data.hostname;
+			Bluetooth.isReady = true;
+			Bluetooth.emit('ready');
+		})
+
+		socket.on('disconnect', function() {
+			console.log('socket disconnected');
+		});
+
+		socket.on('error', function(err) {
+			console.log('socket error', err);
+		});
+
+		socket.on('receiveOnPort', function(data) {
+			Bluetooth.emit('receiveOnPort', [data]);
+		});
+
+		socket.on('otherSent', function(data) {
+			Bluetooth.emit('otherSent', [data]);
+		});
+
+		Bluetooth.listPorts = function(callback) {
+			socket.emit('listPorts', {}, function(data) {
+				//console.log('listPorts callback');
+				if(data.err) console.log('listPorts callback err ', err);
+				else callback(data);
+			});
+		};
+
+		Bluetooth.openPort = function(portName, callback) {
+			socket.emit('subscribePort', {portName: portName}, function(data) {
+				if(callback && typeof callback === 'function') {
+					if(data && data.err) callback(data.err);
+					else callback();
+				}
+			});
+		};
+
+		Bluetooth.closePort = function(portName, callback) {
+			socket.emit('unsubscribePort', {portName: portName}, function(data) {
+				if(callback && typeof callback === 'function') callback();
+			});
+		};
+
+		Bluetooth.sendOnPort = function(portName, data, callback) {
+			socket.emit('sendOnPort', {portName: portName, serialData: data}, function(data) {
+				if(callback && typeof callback === 'function') {
+					if(data && data.err) callback(data.err);
+					else callback();
+				}
+			});
+		}
+
+
+	} else if(hostType === "Android") {
+		// android bluetooth /////////////////////////////////////////////////////////////////////////////////
+
+		Bluetooth.emit('ready');
+	}
+
+
+	return Bluetooth;
+}) ();
+
+// end Bluetooth ////////////////////////////////////////////////////
+
+
+
+
+
+
+
+// socket to web server /////////////////////////////////////////////
+var webSocket = io.connect('http://192.168.1.2:8090');
+webSocket.on('connect', function() {
+	console.log('websocket connected');
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var state = {};
+var svgns = 'http://www.w3.org/2000/svg';
+
+var screenEdit_selectedControl;
+var screenEdit_isDragging = false;
+var screenEdit_lastDragPosition = {};
+
+function getPortListElement(port) {
+	//<li class="odd"><h2>COM1</h2><small class="sub">Microsoft</small></li>
+	var li = document.createElement("li");
+	li.className = "clickable";
+	var h2 = document.createElement("h2");
+	h2.textContent = port.portName;
+	var small = document.createElement("small");
+	small.textContent = port.manufacturer || "";
+	//port.isOpen
+	small.className = "sub";
+	li.appendChild(h2);
+	li.appendChild(small);
+	li.addEventListener('click', function(e) {
+		navigate_screenControlSelect(port.portName);
+	});
+	return li;
+}
+
+function getControlTypeListElement(controlDefinition) {
+	var definition = controlDefinition;
+	var li = document.createElement('li');
+	li.className = 'clickable';
+	var h2 = document.createElement('h2');
+	h2.textContent = definition.displayName;
+	li.appendChild(h2);
+	li.addEventListener('click', function(e) {
+		var menuDiv = document.getElementById('screenEdit_addControlMenu');
+		menuDiv.style.display = 'none';
+
+		var newControl = new Control(definition, 200, 200);
+		theController.addControl(newControl);
+		screenEdit_putControl(newControl);
+	})
+	return li;
+}
+
+function screenEdit_putControl(control) {
+	var svg = document.getElementById('screenEdit_svg');
+	var g = control.buildForEdit();
+	svg.appendChild(g);
+	svgAttr(g, 'class', 'draggable');
+
+	
+	g.addEventListener('touchstart', function(e) {
+		var touch = e.touches[0];
+		screenEdit_selectControl(control);
+
+		screenEdit_isDragging = true;
+		screenEdit_lastDragPosition = {
+			x: touch.clientX, y: touch.clientY
+		};
+		e.preventDefault();
+		return false;
+	}, false);
+	g.addEventListener('mousedown', function(e) {
+		screenEdit_selectControl(control);
+
+		screenEdit_isDragging = true;
+		screenEdit_lastDragPosition = {
+			x: e.clientX, y: e.clientY
+		};
+	}, false);
+	g.addEventListener('touchmove', function(e) {
+		var touch = e.touches[0];
+		var editSVG = document.getElementById('screenEdit_svg');
+		if(screenEdit_isDragging) {
+			var scaleFactor;
+			if(editSVG.offsetWidth > 2*editSVG.offsetHeight) {
+				// width is in excess; height controls scale
+				var scaleFactor = 1000 / editSVG.offsetHeight;
+			} else {
+				// height is in excess; width controls scale
+				var scaleFactor = 2000 / editSVG.offsetWidth;
+			}
+			var dX = touch.clientX - screenEdit_lastDragPosition.x;
+			var dY = touch.clientY - screenEdit_lastDragPosition.y;
+			screenEdit_selectedControl.translate(scaleFactor * dX, scaleFactor * dY);
+			screenEdit_lastDragPosition = {x: touch.clientX, y: touch.clientY};
+			e.preventDefault();
+			return false;
+		} 
+	}, false);
+
+	g.addEventListener('click', function(e) {
+		e.stopPropagation(); // stop it from going to svg which deselects;
+	}, false); 
+	g.addEventListener('dblclick', function(e) {
+		 navigate_screenEditProperties(control);
+	}, false);
+	g.addEventListener('mouseup', function(e) {
+		screenEdit_isDragging = false;
+		theController.save();
+	}, false);
+
+	var lastTouchStart;
+	g.addEventListener('touchend', function(e) {
+		var thisTouchStart = (new Date()).valueOf();
+		if(thisTouchStart - lastTouchStart < 300) {
+			// double click
+			setTimeout(function() {
+				navigate_screenEditProperties(control);
+			}, 0);
+		}
+
+		lastTouchStart = thisTouchStart;
+		screenEdit_isDragging = false;
+		theController.save();
+		e.preventDefault();
+		return false;
+	}, false);
+}
+
+function screenControl_putControl(control) {
+	var svg = document.getElementById('screenControl_svg');
+	var g = control.buildForControl(theControlInterface);
+	svg.appendChild(g);
+	//svgAttr(g, 'style', 'cursor: pointer;');
+
+}
+
+function asArray(pseudoArray) {
+	return Array.prototype.slice.call(pseudoArray);
+}
+
+function svgMatrixToTransformText(svgMatrix) {
+	var m = svgMatrix;
+	return 'matrix(' + m.a + ' ' + m.b + ' ' + m.c + ' ' + m.d + ' ' + m.e + ' ' + m.f + ')';
+}
+
+function clearChildren(element) {
+	while(element.firstChild) {
+		element.removeChild(element.firstChild);
+	}
+}
+
+function screenEdit_selectControl(control) {
+	var oldControl = screenEdit_selectedControl;
+	if(oldControl) oldControl.element.style.opacity = 1;
+	screenEdit_selectedControl = control;
+	control.element.style.opacity = 0.5;
+	document.getElementById('screenEdit_properties').className = 'titleIconButton';
+	document.getElementById('screenEdit_delete').className = 'titleIconButton';
+}
+
+function screenEdit_clearSelection() {
+	var oldControl = screenEdit_selectedControl;
+	if(oldControl) oldControl.element.style.opacity = 1;
+	screenEdit_selectedControl = undefined;
+	document.getElementById('screenEdit_properties').className = 'titleIconButtonDeactivated';
+	document.getElementById('screenEdit_delete').className = 'titleIconButtonDeactivated';
+}
+
+
+
+
+
+
+
+
+
+
+// Navigate ///////////////////////////////////////////////////////////////////////////
+
+var screenNames = [
+		'screenPortSelect',
+		'screenControlSelect',
+		'screenControl',
+		'screenEdit',
+		'screenEditProperties',
+		'screenTerminal'
+	];
+
+function switchScreen(toScreen) {
+	//console.log('switch to screen ', toScreen);
+
+	var domScreen;
+	screenNames.forEach(function(screenName) {
+		if(screenName !== toScreen)  {
+			domScreen = document.getElementById(screenName);
+			if(domScreen) {
+			   domScreen.style.opacity = 0;
+			   domScreen.style.display = 'none';
+			}
+		}
+	});
+
+	domScreen = document.getElementById(toScreen);
+	if(!domScreen) console.log('no domScreen');
+	if(domScreen) {
+		domScreen.style.opacity = 1;
+		domScreen.style.display = 'block';
+	}
+
+	state.screenName = toScreen;
+
+	onResize();
+}
+
+
+window.onpopstate = function(e) {
+	//console.log('pop state ', window.location.pathname, e.state);
+	handleNavigate(true);
+	if(e.state) state = e.state;
+	else state = {};
+};
+
+function handleNavigate(dontPushState) {
+	if(!Bluetooth.isReady) return; // skip initial window.onpopstate until bt is ready
+	//console.log('handle navigate');
+	//if(!state) {
+		// initial navigation
+		var urlPath = window.location.pathname.split('/');
+
+		var screenName = urlPath[1];
+		var comPort = urlPath[2];
+
+		//console.log('handle navigate state ', state);
+		if(screenName === undefined || screenName === '' || screenName === 'screenPortSelect') {
+			navigate_screenPortSelect(dontPushState);
+		} else if(screenName === 'screenPortSelect') {
+			navigate_screenPortSelect(dontPushState);
+		} else if(screenName === 'screenControlSelect') {
+			navigate_screenControlSelect(comPort, dontPushState);
+		} else if(screenName === 'screenEdit') {
+			navigate_screenEdit(comPort, dontPushState);
+		} else if(screenName === 'screenControl') {
+			navigate_screenControl(comPort, dontPushState);
+		} else if(screenName === 'screenEditProperties') {
+			//navigate_screenEditProperties();
+			// redirect to home page
+			navigate_screenPortSelect('replace');
+		} else if(screenName === 'screenTerminal') {
+			navigate_screenTerminal(comPort, dontPushState);
+		}
+	//}
+}
+
+
+
+function navigate_screenPortSelect(dontPushState) {
+	if(theControlInterface) theControlInterface.clearEvents();
+	shortcut.remove('Delete');
+
+	// cache old comPort from state 
+	Bluetooth.listPorts(function(data) {
+		var ports = data.ports;
+
+		var domHostname = document.getElementById("hostname");
+		var domList = document.getElementById("portList");
+
+		domHostname.textContent = " on " + data.hostname;
+		//console.log("Ports: ", ports);
+
+		clearChildren(domList);
+
+		var fragment = document.createDocumentFragment();
+		ports.forEach(function(port, index) {
+			var li = getPortListElement(port);
+			if(index % 2) li.className += " even";
+			else li.className += " odd";
+			fragment.appendChild(li);
+		})
+
+		domList.appendChild(fragment);
+
+		//console.log('navigate_screenPortSelect state ', state);
+		if(state && state.comPort) Bluetooth.closePort(state.comPort);
+
+		switchScreen('screenPortSelect');
+	});
+
+	// if this statement gets moved into callback, need to cache & refer
+	//   to state.comPort; it will be overwritten with undefined when navigation
+	//   is complete
+	//console.log('navigate_screenPortSelect state ', state);
+	if(state && state.comPort) Bluetooth.closePort(state.comPort);
+	if(dontPushState === 'replace') history.replaceState(state, '', '/screenPortSelect');
+	else if(!dontPushState) history.pushState(state,"",'/screenPortSelect');
+
+};
+
+
+var theController;
+
+function navigate_screenControlSelect(comPort, dontPushState) {
+	if(theControlInterface) theControlInterface.clearEvents();
+	shortcut.remove('Delete');
+
+	Controller.fetch(state.hostname, comPort, function(controller) {
+		if(!controller) {
+			theController = new Controller(state.hostname, comPort);
+		} else {
+			theController = controller;
+		}
+
+		var domCOMID = document.getElementById('screenControlSelect_COM');
+		domCOMID.textContent = comPort;
+		state.comPort = comPort;
+
+		console.log('screen control select ', state);
+		if(!dontPushState) history.pushState(state,"",'/screenControlSelect/' + comPort)
+		switchScreen('screenControlSelect');
+	});
+	
+}
+
+function navigate_screenEdit(comPort, dontPushState) {
+	if(theControlInterface) theControlInterface.clearEvents();
+	shortcut.remove('Delete');
+
+	if(!state.screenName) {
+		//fresh, need controller
+		Controller.fetch(state.hostname, comPort, function(controller) {
+			if(!controller) {
+				theController = new Controller(state.hostname, comPort);
+			} else {
+				theController = controller;
+			}
+
+			theRest();
+		});
+	} else {
+		// can do it directly
+		theRest();
+		
+	}
+
+	shortcut.add('Delete', screenEdit_Delete);
+
+	function theRest() {
+		var editSVG = document.getElementById('screenEdit_svg');
+		clearChildren(editSVG);
+		theController.controls.forEach(function(control) {
+			screenEdit_putControl(control);
+		});
+
+
+		state.comPort = comPort;
+		if(dontPushState === 'replace') history.replaceState(state, '', '/screenEdit/' + comPort);
+		else if(!dontPushState) history.pushState(state,'','/screenEdit/' + comPort)
+		switchScreen('screenEdit');
+	}
+};
+
+var theControlInterface;
+
+function navigate_screenControl(comPort, dontPushState) {
+	shortcut.remove('Delete');
+
+	if(!state.screenName) {
+		//fresh, need controller
+		Controller.fetch(state.hostname, comPort, function(controller) {
+			if(!controller) {
+				theController = new Controller(state.hostname, comPort);
+			} else {
+				theController = controller;
+			}
+			
+			afterGetController();
+		});
+	} else {
+		// can do it directly
+		afterGetController();
+		
+	}
+
+	function afterGetController() {
+		Bluetooth.openPort(comPort, function(data) {
+			theRest();
+		});
+	}
+
+	function theRest() {
+		// just to be sure
+		if(theControlInterface) theControlInterface.clearEvents();
+
+		theControlInterface = new ControlInterface(comPort);
+
+		var controlSVG = document.getElementById('screenControl_svg');
+		clearChildren(controlSVG);
+		theController.controls.forEach(function(control) {
+			screenControl_putControl(control);
+		});
+
+		state.comPort = comPort;
+		if(dontPushState === 'replace') history.replaceState(state, '', '/screenControl/' + comPort);
+		else if(!dontPushState) history.pushState(state,'','/screenControl/' + comPort)
+		switchScreen('screenControl');
+	}
+};
+
+function navigate_screenEditProperties(control, dontPushState) {
+	if(theControlInterface) theControlInterface.clearEvents();
+	shortcut.remove('Delete');
+
+	if(!state || !state.comPort) {
+		// looks like we're coming here fresh, not from an edit screen, maybe a
+		// pasted url
+		// redirect
+		window.location = '/';
+	}
+
+	var def = control.controlDefinition;
+	document.getElementById('screenEditProperties_header').textContent = def.displayName + ' Properties';
+	var propertiesDiv = document.getElementById('screenEditProperties_div');
+	var documentFragment = document.createDocumentFragment();
+	clearChildren(propertiesDiv);
+	def.forEachProperty(function(property, propName) {
+		var h2 = document.createElement('h2');
+		h2.style.display = 'inline';
+		h2.textContent = property.displayName + ': ';
+		documentFragment.appendChild(h2);
+
+		if(property.type === 'select') {
+			var select = document.createElement('select');
+			documentFragment.appendChild(select);
+			var option;
+			property.values.forEach(function(value) {
+				option = document.createElement('option');
+				option.textContent = value;
+				if(property.defaultValue === value) option.selected = true;
+				select.appendChild(option);
+			});
+			select.addEventListener('change', function(e) {
+				control.setPropertyValue(propName, select.value);
+			}, false);
+		} else {
+			var input = document.createElement('input');
+			documentFragment.appendChild(input);
+			input.value = control.getPropertyValue(propName) || '';
+			input.addEventListener('change', function(e) {
+				control.setPropertyValue(propName, input.value);
+			}, false);
+		}
+
+
+
+		documentFragment.appendChild(document.createElement('br'));
+	})
+	propertiesDiv.appendChild(documentFragment);
+
+	if(!dontPushState) history.pushState(state,"",'/screenEditProperties')
+	switchScreen('screenEditProperties');
+}
+
+function navigate_screenTerminal(comPort, dontPushState) {
+	if(theControlInterface) theControlInterface.clearEvents();
+	shortcut.remove('Delete');
+
+	console.log('navigate termainl for ' + comPort);
+	Bluetooth.openPort(comPort, function(data) {
+		theRest();
+	});
+
+	function theRest() {
+		console.log('the rest');
+		// just to be sure
+		if(theControlInterface) theControlInterface.clearEvents();
+
+		//theControlInterface = new ControlInterface(comPort);
+
+		/*
+		var controlSVG = document.getElementById('screenControl_svg');
+		clearChildren(controlSVG);
+		theController.controls.forEach(function(control) {
+			screenControl_putControl(control);
+		});
+		*/
+		var header = document.getElementById('screenTerminal_header');
+		header.textContent = 'Terminal on ' + comPort;
+		state.comPort = comPort;
+		if(dontPushState === 'replace') history.replaceState(state, '', '/screenTerminal/' + comPort);
+		else if(!dontPushState) history.pushState(state,'','/screenTerminal/' + comPort)
+		switchScreen('screenTerminal');
+		var terminalInput = document.getElementById('screenTerminal_input');
+		terminalInput.focus();
+	}
+};
+
+
+ function screenEdit_Delete() {
+ 	console.log('screenEdit_Delete ', state);
+ 	var editSVG = document.getElementById('screenEdit_svg');
+ 	if(state.screenName === 'screenEdit') {
+ 		var control = screenEdit_selectedControl;
+ 		if(control) {
+ 			console.log('removing');
+ 			editSVG.removeChild(control.element);
+ 			screenEdit_clearSelection();
+ 			theController.removeControl(control);
+ 		}
+ 	}
+ };
+
+function onResize() {
+	var editSVG = document.getElementById('screenEdit_svg');
+	var editTitle = document.getElementById('screenEdit_titleBar');
+	//console.log('resize ',window.innerHeight, editTitle.offsetHeight);
+	editSVG.style.height = window.innerHeight - editTitle.offsetHeight;
+
+	var terminal = document.getElementById('screenTerminal_terminal');
+	var footer = document.getElementById('screenTerminal_footer');
+	var terminalHeader = document.getElementById('screenTerminal_header');
+	console.log('inner height ', window.innerHeight, ' footer ', footer.offsetHeight, ' header ', terminalHeader.offsetHeight);
+	terminal.style.height = window.innerHeight - footer.offsetHeight - terminalHeader.offsetHeight - 20;
+	//console.log('terminal height')
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Bluetooth.on('ready', function() {
+	ControlInterface.setBluetooth(Bluetooth);
+	ControlInterface.setShortcut(shortcut);
+
+
+
+
+
+	 document.getElementById('screenControlSelect_Edit').addEventListener('click', function(e) {
+	 	navigate_screenEdit(state.comPort);
+	 }, false);
+
+	 document.getElementById('screenControlSelect_Control').addEventListener('click', function(e) {
+	 	navigate_screenControl(state.comPort);
+	 }, false);
+
+	 document.getElementById('screenControlSelect_Terminal').addEventListener('click',
+	 	function(e) {
+	 		navigate_screenTerminal(state.comPort);
+	 	}, false);
+
+
+
+
+
+
+	 var editSVG = document.getElementById('screenEdit_svg');
+
+	 document.getElementById('screenEdit_gotoControl').addEventListener('click',
+	 	function(e) {
+	 		navigate_screenControl(state.comPort, 'replace');
+	 	}, false);
+
+	 document.getElementById('screenEdit_properties').addEventListener('click',
+	 	function(e) {
+	 		var control = screenEdit_selectedControl;
+	 		if(control) navigate_screenEditProperties(control);
+	 	}, false);
+
+
+
+	 document.getElementById('screenEdit_delete').addEventListener('click',
+	 	screenEdit_Delete, false);
+
+	 
+
+
+
+	// fill add control menu
+	var controlListFragment = document.createDocumentFragment();
+	controlDefinitions.forEach(function(definition, index) {
+		var li = getControlTypeListElement(definition);
+		if(index % 2) li.className += " even";
+		else li.className += " odd";
+	 	controlListFragment.appendChild(li);
+
+	});
+	var controlList = document.getElementById('screenEdit_addControlList');
+	controlList.appendChild(controlListFragment);
+
+ 	var addControlButton = document.getElementById('screenEdit_addControl');
+	addControlButton.addEventListener('click',
+	 	function(e) {
+	 		var controlMenu = document.getElementById('screenEdit_addControlMenu');
+	 		controlMenu.style.top = addControlButton.offsetTop + addControlButton.offsetHeight;
+	 		controlMenu.style.left = addControlButton.offsetLeft;
+	 		if(controlMenu.style.display === 'none') controlMenu.style.display = 'block';
+	 		else controlMenu.style.display = 'none';
+	 		document.getElementById('screenEdit_addControlMenu').style.display = 'true';
+	 	}, false);
+
+
+	
+	editSVG.addEventListener('mousemove', function(e) {
+		if(screenEdit_isDragging) {
+			var scaleFactor;
+			if(editSVG.offsetWidth > 2*editSVG.offsetHeight) {
+				// width is in excess; height controls scale
+				scaleFactor = 1000 / editSVG.offsetHeight;
+			} else {
+				// height is in excess; width controls scale
+				scaleFactor = 2000 / editSVG.offsetWidth;
+			}
+			var dX = e.clientX - screenEdit_lastDragPosition.x;
+			var dY = e.clientY - screenEdit_lastDragPosition.y;
+			screenEdit_selectedControl.translate(scaleFactor * dX, scaleFactor * dY);
+			screenEdit_lastDragPosition = {x: e.clientX, y: e.clientY};
+			e.preventDefault();
+			return false;
+		} 
+	}, false);
+
+	editSVG.addEventListener('click', function(e) {
+		screenEdit_clearSelection();
+	}, false);
+
+	window.onresize = onResize;
+
+
+
+
+
+	document.getElementById('screenControl_gotoEdit').addEventListener('click', function(e) {
+		navigate_screenEdit(state.comPort, 'replace');
+	}, false);
+
+
+	var terminal = document.getElementById('screenTerminal_terminal');
+	var terminalSendButton = document.getElementById('screenTerminal_send');
+	var terminalInput = document.getElementById('screenTerminal_input');
+	var terminalHistory = [];
+	var terminalHistoryIndex = 0;
+	var terminalHistoryMaxItems = 20;
+
+	var terminalSend = function() {
+		var toSend = terminalInput.value;
+
+		terminalHistory.push(toSend);
+
+		toSend = toSend.replace('\\n', '\n').replace('\\r', '\r');
+
+		if(document.getElementById('screenTerminal_lineEnding').value === 'yes')
+			toSend += '\n';
+
+		console.log('terminal send ', toSend);
+		Bluetooth.sendOnPort(state.comPort, toSend);
+
+		terminalAddData('this', toSend);
+
+		/*
+		if(lastTerminalSource === 'this') {
+			targetTerminalElement = lastTerminalElement;
+		} else {
+			targetTerminalElement = document.createElement('span');
+			targetTerminalElement.style.color = 'firebrick';
+			lastTerminalSource = 'this';
+			lastTerminalElement = targetTerminalElement;
+			terminal.appendChild(targetTerminalElement);
+		}
+
+		var lines = toSend.split('\n');
+		lines.forEach(function(line, index) {
+			targetTerminalElement.appendChild(document.createTextNode(line));
+			if(index !== lines.length-1) {
+				targetTerminalElement.appendChild(document.createElement('br'));
+			}
+		}, false);
+		terminal.scrollTop = terminal.scrollHeight;
+		*/
+
+		if(terminalHistory.length > terminalHistoryMaxItems) terminalHistory = terminalHistory.slice(terminalHistory.length - terminalHistoryMaxItems, terminalHistoryMaxItems);
+		terminalHistoryIndex = terminalHistory.length;
+
+		terminalInput.value = '';
+		terminalInput.focus();
+	};
+	terminalSendButton.addEventListener('click', terminalSend, false);
+	terminalInput.addEventListener('keypress', function(e) {
+		if(e.keyCode === 13) {
+			terminalSend();
+		} else {
+			terminalHistoryIndex = terminalHistory.length;
+		}
+	}, false);
+
+	// can't catch up arrow in keypress
+	terminalInput.addEventListener('keydown', function(e) {
+		if(e.keyCode === 38) { // up arrow
+			//console.log('history up');
+			terminalHistoryIndex -= 1;
+			if(terminalHistoryIndex < 0) terminalHistoryIndex = 0;
+			if(terminalHistory[terminalHistoryIndex]) terminalInput.value = terminalHistory[terminalHistoryIndex];
+		} else if(e.keyCode === 40) { // down arrow
+			terminalHistoryIndex += 1;
+			if(terminalHistoryIndex > terminalHistory.length) terminalHistoryIndex = terminalHistory.length;
+			if(terminalHistory[terminalHistoryIndex]) terminalInput.value = terminalHistory[terminalHistoryIndex];
+			else terminalInput.value = '';
+		}
+	});
+
+
+	var lastTerminalElement;
+	var lastTerminalSource;
+
+	var terminal = document.getElementById('screenTerminal_terminal');
+	var targetTerminalElement;
+	var makeTerminalOnData = function(source) {
+		return function(data) {
+			if(data.portName === state.comPort) {
+				//console.log(source + ' ' + data.portName + ": ", data.serialData);
+				terminalAddData(source, data.serialData);
+				/*
+				if(lastTerminalSource === source) {
+					targetTerminalElement = lastTerminalElement;
+				} else {
+					targetTerminalElement = document.createElement('span');
+					if(source === 'rx') targetTerminalElement.style.color = 'olivedrab';
+					if(source === 'other') targetTerminalElement.style.color = 'navy';
+					lastTerminalSource = source;
+					lastTerminalElement = targetTerminalElement;
+					terminal.appendChild(targetTerminalElement);
+				}
+
+				var lines = data.serialData.split('\n');
+				lines.forEach(function(line, index) {
+					targetTerminalElement.appendChild(document.createTextNode(line));
+					if(index !== lines.length-1) {
+						targetTerminalElement.appendChild(document.createElement('br'));
+					}
+				});
+				terminal.scrollTop = terminal.scrollHeight;
+				*/
+			};
+		};
+	};
+
+	var terminalAddData = function(source, string) {
+		if(lastTerminalSource === source) {
+			targetTerminalElement = lastTerminalElement;
+		} else {
+			targetTerminalElement = document.createElement('span');
+			if(source === 'rx') targetTerminalElement.style.color = 'olivedrab';
+			if(source === 'other') targetTerminalElement.style.color = 'navy';
+			if(source === 'this') targetTerminalElement.style.color = 'firebrick';
+			lastTerminalSource = source;
+			lastTerminalElement = targetTerminalElement;
+			terminal.appendChild(targetTerminalElement);
+		}
+
+		var lines = string.split('\n');
+		lines.forEach(function(line, index) {
+			targetTerminalElement.appendChild(document.createTextNode(line));
+			if(index !== lines.length-1) {
+				targetTerminalElement.appendChild(document.createElement('br'));
+			}
+		});
+		var autoscroll = document.getElementById('screenTerminal_autoscroll').checked;
+		if(autoscroll) terminal.scrollTop = terminal.scrollHeight;
+	}
+
+	//var onrx = makeTerminalOnData('rx');
+	//console.log('onrx', typeof onrx, onrx);
+	Bluetooth.on('receiveOnPort', makeTerminalOnData('rx'));
+	Bluetooth.on('otherSent', makeTerminalOnData('other'));
+
+	/*
+	Bluetooth.on('receiveOnPort', function(data) {
+		console.log('rx ' + data.portName + ": ", data.serialData);
+	});
+    */
+
+
+
+
+
+	handleNavigate();
+
+	window.setTimeout(onResize, 1000);
+});
+
+
+
+
+
+</script>
+
+</body>
+</html>
