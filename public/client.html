@@ -740,6 +740,7 @@ function navigate_screenEdit(comPort, dontPushState) {
 var theControlInterface;
 
 function navigate_screenControl(comPort, dontPushState) {
+	if(theControlInterface) theControlInterface.clearEvents();
 	shortcut.remove('Delete');
 
 	if(!state.screenName) {
@@ -839,6 +840,7 @@ function navigate_screenEditProperties(control, dontPushState) {
 }
 
 function navigate_screenTerminal(comPort, dontPushState) {
+	console.log('about to clear events');
 	if(theControlInterface) theControlInterface.clearEvents();
 	shortcut.remove('Delete');
 

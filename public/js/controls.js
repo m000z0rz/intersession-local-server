@@ -77,12 +77,14 @@ var ControlInterface = (function () {
 	};
 
 	ControlInterface.prototype.removeShortcut = function (key) {
+		shortcut.remove(key, 'keydown');
+		shortcut.remove(key, 'keyup');
 		var index = existingShortcuts.indexOf(key);
 		if(index > -1) existingShortcuts.splice(index, 1);
+
 	};
 
 	ControlInterface.prototype.clearShortcuts = function () {
-		console.log('clearing shortcuts');
 		var self = this;
 		//copy array
 		var toClear = [];
