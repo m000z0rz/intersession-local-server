@@ -454,11 +454,13 @@ defineControl(function() {
 
 
 			var endDrag = function() {
-				circle.style.fill = '#e7e7e9';
-				dragTouchIdentifier = undefined;
-				isDragging = false;
-				snap(control);
-				sendCurrentValue();
+				if(isDragging) {
+					circle.style.fill = '#e7e7e9';
+					dragTouchIdentifier = undefined;
+					isDragging = false;
+					snap(control);
+					sendCurrentValue();
+				}
 			};
 
 			addPointerListeners(slider, ['mouseup', 'touchend'], endDrag);
@@ -714,11 +716,13 @@ defineControl(function() {
 
 
 			var endDrag = function() {
-				circle.style.fill = '#e7e7e9';
-				dragTouchIdentifier = undefined;
-				isDragging = false;
-				snap(control);
-				sendCurrentValue();
+				if(isDragging) {
+					circle.style.fill = '#e7e7e9';
+					dragTouchIdentifier = undefined;
+					isDragging = false;
+					snap(control);
+					sendCurrentValue();
+				}
 			};
 
 			addPointerListeners(slider, ['mouseup', 'touchend'], endDrag);

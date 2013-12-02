@@ -367,7 +367,8 @@ var Bluetooth = (function() {
 
 
 // socket to web server /////////////////////////////////////////////
-var webSocket = io.connect('http://192.168.1.2:8090');
+//var webSocket = io.connect('http://192.168.1.2:8090');
+var webSocket = io.connect('http://localHost:8090');
 webSocket.on('connect', function() {
 	console.log('websocket connected');
 });
@@ -891,9 +892,12 @@ function navigate_screenTerminal(comPort, dontPushState) {
 
 function onResize() {
 	var editSVG = document.getElementById('screenEdit_svg');
+	var controlSVG = document.getElementById('screenControl_svg');
 	var editTitle = document.getElementById('screenEdit_titleBar');
+	var controlTitle = document.getElementById('screenControl_titleBar');
 	//console.log('resize ',window.innerHeight, editTitle.offsetHeight);
 	editSVG.style.height = window.innerHeight - editTitle.offsetHeight;
+	controlSVG.style.height = window.innerHeight - controlTitle.offsetHeight;
 
 	var terminal = document.getElementById('screenTerminal_terminal');
 	var footer = document.getElementById('screenTerminal_footer');
