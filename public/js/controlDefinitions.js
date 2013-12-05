@@ -36,21 +36,22 @@ function svgTranslate(element, dX, dY) {
 	var pos = svgGetPosition(element);
 
 	newX = pos.x + dX; newY = pos.y + dY;
-	//newX = svgAttr(element, 'x') + dX; newY = svgAttr(element, 'y') + dY;
-	//console.log('new x y ', newX, newY);
+	//console.log('translate ', pos, newX, newY);
 	svgAttr(element, 'transform', 'translate(' + newX + ' ' + newY + ')');
 }
 
 function svgGetPosition(element) {
 	var x, y;
 	var currentTransform = svgAttr(element, 'transform');
-	var translateRegex = /translate\((\-?\d+\.?\d*) (\-?\d+\.?\d*)\)/;
+	// need to match a javascript #, like -1.283e-13
+	var translateRegex = /translate\((\-?\d+(\.\d*)?(e\-?\d+)?) (\-?\d+(\.\d*)?(e\-?\d+)?)\)/;
 	var regexResults = currentTransform.match(translateRegex);
-	if(regexResults && regexResults[1] && regexResults[2]) {
+	if(regexResults && regexResults[1] && regexResults[4]) {
 		//console.log('old x y ', regexResults[1], regexResults[2]);
 		x = +regexResults[1];
-		y = +regexResults[2];
+		y = +regexResults[4];
 	} else {
+		console.log('no pos on ' + currentTransform);
 		x = 0;
 		y = 0;
 	}
@@ -680,7 +681,7 @@ defineControl(function() {
 				var toSend = control.getPropertyValue('sendOnChange');
 				if(toSend && toSend !== '') {
 					toSend = toSend.replace('?', value);
-					console.log('send ',toSend);
+					//console.log('send ',toSend);
 					controlInterface.send(toSend);
 				}
 
@@ -794,6 +795,285 @@ defineControl(function() {
 
 
 // two axis
+defineControl(function() {
+	var backdropRadius = 300;
+	var sliderRadius = 100;
+
+	var sliderMaxRadius = backdropRadius - sliderRadius;
+
+	function map(value, fromMin, fromMax, toMin, toMax) {
+		return (value - fromMin) * (toMax - toMin) / (fromMax - fromMin) + toMin;
+	}
+
+	/*
+	var getSliderValue = function(control) {
+		var pos = svgGetPosition(control.svg.slider);
+		return Math.round(map(pos.y, sliderMaxY, sliderMinY, 0, 1023));
+		//return (sliderMaxY - pos.y - sliderMinY) * 1024 / sliderMaxValue;
+	};
+	*/
+
+
+
+	function snap(control) {
+		var slider = control.svg.slider;
+		var snapTo = control.getPropertyValue('snapTo');
+		var pos = svgGetPosition(slider);
+		if (snapTo === 'None') {
+			// nada
+		} else {
+			svgSetPosition(slider, 0, 0);
+		}
+	}
+
+	function sign(x) {
+		return x ? x/Math.abs(x) : 0;
+	}
+
+	function toPolar(x, y) {
+		if(typeof x === 'object') {
+			y = x.y;
+			x = x.x;
+		}
+		var r = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)),
+			theta = Math.atan(y/x);
+		if(sign(x) === -1) theta += Math.PI;
+		else if(sign(y) === -1) theta += 2*Math.PI;
+		else if(x === 0 && y === 0) theta = 0;
+		return { r: r, theta: theta};
+	}
+
+	function toPolarD(x, y) {
+		var ret = toPolar(x, y);
+		return {
+			r: ret.r,
+			theta: 360*ret.theta/(2*Math.PI)
+		};
+	}
+
+	function toCartesian(r, theta) {
+		if(typeof r === 'object') {
+			theta = r.theta;
+			r = r.r;
+		}
+		return {
+			x: r * Math.cos(theta),
+			y: r * Math.sin(theta)
+		};
+	}
+
+	window.toPolar = toPolar;
+	window.toPolarD = toPolarD;
+	window.toCartesian = toCartesian;
+
+
+
+	var controlDefinition = {
+		typeID: 'twoAxis',
+		displayName: 'Thumbstick',
+		buildSVG: function(control) {
+			var g = createSVGElement('g');
+
+			var backdrop = createSVGElement('circle');
+			svgAttr(backdrop, 'r', backdropRadius);
+			backdrop.style.fill = '#575759';
+			backdrop.style.stroke = '#333333';
+			backdrop.style.strokeWidth = 5;
+			g.appendChild(backdrop);
+			control.svg.backdrop = backdrop;
+
+			var slider = createSVGElement('g');
+			svgAttr(slider, 'transform', 'translate(0 0)');
+			control.svg.slider = slider;
+			var snapTo = control.getPropertyValue('snapTo');
+			if(snapTo === 'None') {
+				svgSetPosition(slider, 0, 0);
+			} else {
+				snap(control);
+			}
+			g.appendChild(slider);
+			
+
+			var circle = createSVGElement('circle');
+			svgAttr(circle, 'r', 100);
+			circle.style.fill = '#e7e7e9';
+			circle.style.stroke = '#333333';
+			circle.style.strokeWidth = 5;
+			slider.appendChild(circle);
+			control.svg.circle = circle;
+
+
+			var label = createSVGElement('text');
+			svgAttr(label, 'text-anchor', 'middle');
+			svgAttr(label, 'alignment-baseline', 'middle');
+			svgAttr(label, 'font-size', '2em');
+			label.textContent = control.getPropertyValue('label') || '';
+			slider.appendChild(label);
+			control.svg.label = label;
+
+			return g;
+		},
+
+		wireEvents: function(control, controlInterface) {
+			var circle = control.svg.circle;
+			var slider = control.svg.slider;
+			var isDragging = false;
+			var lastDragPosition = {};
+			var dragTouchIdentifier;
+
+			slider.style.cursor = 'pointer';
+
+
+			slider.addEventListener('touchstart', function(e) {
+				var touch = e.changedTouches[0];
+				dragTouchIdentifier = touch.identifier;
+
+				isDragging = true;
+				lastDragPosition = {
+					x: touch.clientX, y: touch.clientY
+				};
+				circle.style.fill = 'gold';
+				e.preventDefault();
+				return false;
+			}, false);
+			slider.addEventListener('mousedown', function(e) {
+				isDragging = true;
+				lastDragPosition = {
+					x: e.clientX, y: e.clientY
+				};
+				circle.style.fill = 'gold';
+			}, false);
+
+			var scaleFactor;
+			var svg = document.getElementById('screenControl_svg');
+
+			svg.addEventListener('touchmove', function(e) {
+				var touch;
+				asArray(e.changedTouches).forEach(function(t) {
+					if (t.identifier === dragTouchIdentifier) touch = t;
+				});
+				if(touch) {
+					drag(e, touch.clientX, touch.clientY);
+				}
+			}, false);
+
+			svg.addEventListener('mousemove', function(e) {
+				drag(e, e.clientX, e.clientY);
+			}, false);
+
+
+			var timeoutID;
+			var lastSend_ms = (new Date()).valueOf();
+			var sendMinInterval = 100;
+
+			function sendCurrentValue() {
+				//var value = getSliderValue(control);
+				var pos = svgGetPosition(slider);
+				var value = {
+					x: Math.round(map(pos.x, -sliderMaxRadius, sliderMaxRadius, 0, 1023)),
+					y: Math.round(map(pos.y, -sliderMaxRadius, sliderMaxRadius, 0, 1023))
+				};
+				var toSend = control.getPropertyValue('sendOnChange');
+				if(toSend && toSend !== '') {
+					toSend = toSend.replace(/\?/, value.x);
+					toSend = toSend.replace(/\?/, value.y);
+					controlInterface.send(toSend);
+				}
+
+				lastSend_ms = (new Date()).valueOf();
+			}
+
+			function drag(e, clientX, clientY) {
+				var scaleFactor;
+				if(isDragging) {
+					scaleFactor = getControlScale(svg);
+					var dX = clientX - lastDragPosition.x;
+					var dY = clientY - lastDragPosition.y;
+
+					svgTranslate(slider, scaleFactor * dX, scaleFactor * dY);
+					lastDragPosition = {x: clientX, y: clientY};
+
+					// clamp
+					var pos = svgGetPosition(slider);
+					var polar = toPolar(pos);
+					if(polar.r > sliderMaxRadius) {
+						var clamped = toCartesian(sliderMaxRadius, polar.theta);
+						svgSetPosition(slider, clamped.x, clamped.y);
+					}
+					//polar.r = Math.max(polar.r, sliderMaxRadius);
+
+					/*
+					var pos = svgGetPosition(slider);
+					if(pos.y < sliderMinY) svgSetPosition(slider, pos.x, sliderMinY);
+					if(pos.y > sliderMaxY) svgSetPosition(slider, pos.x, sliderMaxY);
+					*/
+
+					var delay_ms, now_ms;
+					now_ms = (new Date()).valueOf();
+					if(now_ms - lastSend_ms > sendMinInterval) delay_ms = 0;
+					else delay_ms = sendMinInterval - (now_ms - lastSend_ms);
+
+					if(timeoutID) window.clearTimeout(timeoutID);
+					timeoutID = window.setTimeout(sendCurrentValue, delay_ms);
+				}
+				e.preventDefault();
+				return false;
+			}
+
+
+
+
+			var endDrag = function() {
+				if(isDragging) {
+					circle.style.fill = '#e7e7e9';
+					dragTouchIdentifier = undefined;
+					isDragging = false;
+					snap(control);
+					sendCurrentValue();
+				}
+			};
+
+			addPointerListeners(slider, ['mouseup', 'touchend'], endDrag);
+			svg.addEventListener('mouseleave', endDrag, false);
+			svg.addEventListener('mouseup', endDrag, false);
+		},
+
+		properties: {
+			label: {
+				displayName: 'Label',
+				type: 'label',
+				onChange: function(control, newValue, oldValue) {
+					control.svg.label.textContent = newValue;
+				}
+			},
+			snapTo: {
+				displayName: 'When not pressed, snap to',
+				type: 'select',
+				values: [
+					'None',
+					'Middle',
+				],
+				defaultValue: 'Middle',
+				onChange: function(control, newValue, oldValue) {
+
+				}
+			},
+			sendOnChange: {
+				displayName: 'Send on change (first ? will be replaced with x, ? with y)',
+				type: 'serial'
+			},
+
+		},
+
+		helpText: 'Sends a value between 0 and 1023'
+	};
+
+	return controlDefinition;
+});
+
+
+
+
 
 
 

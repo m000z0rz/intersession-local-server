@@ -546,6 +546,37 @@ function screenEdit_clearSelection() {
 	document.getElementById('screenEdit_delete').className = 'titleIconButtonDeactivated';
 }
 
+function clearSVG(svg) {
+	clearChildren(svg);
+
+	var rect = createSVGElement('rect');
+	svgAttr(rect, 'x', 0); svgAttr(rect, 'y', 0);
+	svgAttr(rect, 'rx', 10); svgAttr(rect, 'ry', 10);
+	svgAttr(rect, 'width', '2000'); svgAttr(rect, 'height', '1000');
+
+	rect.style.fill = '#ffffff';
+	rect.style.stroke = '#aaaaaa';
+	rect.style.strokeWidth = 1;
+	svg.appendChild(rect);
+	//control.svg.rect = rect;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -725,7 +756,8 @@ function navigate_screenEdit(comPort, dontPushState) {
 
 	function theRest() {
 		var editSVG = document.getElementById('screenEdit_svg');
-		clearChildren(editSVG);
+		//clearChildren(editSVG);
+		clearSVG(editSVG);
 		theController.controls.forEach(function(control) {
 			screenEdit_putControl(control);
 		});
@@ -767,6 +799,8 @@ function navigate_screenControl(comPort, dontPushState) {
 		});
 	}
 
+
+
 	function theRest() {
 		// just to be sure
 		if(theControlInterface) theControlInterface.clearEvents();
@@ -774,7 +808,9 @@ function navigate_screenControl(comPort, dontPushState) {
 		theControlInterface = new ControlInterface(comPort);
 
 		var controlSVG = document.getElementById('screenControl_svg');
-		clearChildren(controlSVG);
+		clearSVG(controlSVG);
+		//clearChildren(controlSVG);
+
 		theController.controls.forEach(function(control) {
 			screenControl_putControl(control);
 		});
