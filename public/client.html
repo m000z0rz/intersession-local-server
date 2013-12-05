@@ -345,6 +345,10 @@ var Bluetooth = (function() {
 					else callback();
 				}
 			});
+			Bluetooth.emit('thisSent', [{
+				portName: portName,
+				serialData: data
+			}]);
 		}
 
 
@@ -560,6 +564,8 @@ function clearSVG(svg) {
 	svg.appendChild(rect);
 	//control.svg.rect = rect;
 }
+
+
 
 
 
@@ -1078,6 +1084,7 @@ Bluetooth.on('ready', function() {
 	var terminalHistory = [];
 	var terminalHistoryIndex = 0;
 	var terminalHistoryMaxItems = 20;
+	var thisFromTerminal = false;
 
 	var terminalSend = function() {
 		var toSend = terminalInput.value;
@@ -1090,9 +1097,11 @@ Bluetooth.on('ready', function() {
 			toSend += '\n';
 
 		console.log('terminal send ', toSend);
-		Bluetooth.sendOnPort(state.comPort, toSend);
 
-		terminalAddData('this', toSend);
+		thisFromTerminal = true;
+		Bluetooth.sendOnPort(state.comPort, toSend);
+		thisFromTerminal = false;
+		//terminalAddData('this', toSend);
 
 		/*
 		if(lastTerminalSource === 'this') {
@@ -1182,13 +1191,15 @@ Bluetooth.on('ready', function() {
 	};
 
 	var terminalAddData = function(source, string) {
+		if(source === 'this' && thisFromTerminal) source = 'terminal';
 		if(lastTerminalSource === source) {
 			targetTerminalElement = lastTerminalElement;
 		} else {
 			targetTerminalElement = document.createElement('span');
 			if(source === 'rx') targetTerminalElement.style.color = 'olivedrab';
 			if(source === 'other') targetTerminalElement.style.color = 'navy';
-			if(source === 'this') targetTerminalElement.style.color = 'firebrick';
+			if(source === 'this') targetTerminalElement.style.color = 'indianred';
+			if(source === 'terminal') targetTerminalElement.style.color = 'firebrick';
 			lastTerminalSource = source;
 			lastTerminalElement = targetTerminalElement;
 			terminal.appendChild(targetTerminalElement);
@@ -1209,6 +1220,7 @@ Bluetooth.on('ready', function() {
 	//console.log('onrx', typeof onrx, onrx);
 	Bluetooth.on('receiveOnPort', makeTerminalOnData('rx'));
 	Bluetooth.on('otherSent', makeTerminalOnData('other'));
+	Bluetooth.on('thisSent', makeTerminalOnData('this'));
 
 	/*
 	Bluetooth.on('receiveOnPort', function(data) {
