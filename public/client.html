@@ -1108,7 +1108,7 @@ Bluetooth.on('ready', function() {
 
 		terminalHistory.push(toSend);
 
-		toSend = unescaeForSerial(toSend);
+		toSend = unescapeForSerial(toSend);
 
 		if(document.getElementById('screenTerminal_lineEnding').value === 'yes')
 			toSend += '\n';
