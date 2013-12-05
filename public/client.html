@@ -185,6 +185,7 @@
 		<div class='titleBar' id='screenControl_titleBar'>
 			<h1 style='display: inline;'>Control</h1>
 			<span id='screenControl_gotoEdit' class='titleIconButton'>Edit</span>
+			<span id='screenControl_gotoTerminal' class='titleIconButton'>Terminal</span>
 		</div>
 
 		<svg id='screenControl_svg' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www3.org/1999/xlink' viewbox='0 0 2000 1000'>
@@ -197,6 +198,7 @@
 		<div class='titleBar' id='screenEdit_titleBar'>
 			<h1 style='display: inline;'>Edit</h1>
 			<span id='screenEdit_gotoControl' class='titleIconButton'>Control</span>
+			<span id='screenEdit_gotoTerminal' class='titleIconButton'>Terminal</span>
 			<span id='screenEdit_delete' class='titleIconButtonDeactivated'>Delete</span>
 			<span id='screenEdit_properties' class='titleIconButtonDeactivated'>Properties</span>
 			<span id='screenEdit_addControl' class='titleIconButton'>+</span>
@@ -565,7 +567,11 @@ function clearSVG(svg) {
 	//control.svg.rect = rect;
 }
 
-
+function unescapeForSerial(string) {
+	return string.replace(/\\n/g, '\n')
+			.replace(/\\r/g, '\r')
+			.replace(/\\\\/g, '\\');
+}
 
 
 
@@ -1004,6 +1010,11 @@ Bluetooth.on('ready', function() {
 	 		navigate_screenControl(state.comPort, 'replace');
 	 	}, false);
 
+	 document.getElementById('screenEdit_gotoTerminal').addEventListener('click',
+	 	function(e) {
+	 		navigate_screenTerminal(state.comPort);
+	 	}, false);
+
 	 document.getElementById('screenEdit_properties').addEventListener('click',
 	 	function(e) {
 	 		var control = screenEdit_selectedControl;
@@ -1077,6 +1088,10 @@ Bluetooth.on('ready', function() {
 		navigate_screenEdit(state.comPort, 'replace');
 	}, false);
 
+	document.getElementById('screenControl_gotoTerminal').addEventListener('click', function(e) {
+		navigate_screenTerminal(state.comPort);
+	}, false);
+
 
 	var terminal = document.getElementById('screenTerminal_terminal');
 	var terminalSendButton = document.getElementById('screenTerminal_send');
@@ -1086,12 +1101,14 @@ Bluetooth.on('ready', function() {
 	var terminalHistoryMaxItems = 20;
 	var thisFromTerminal = false;
 
+
+
 	var terminalSend = function() {
 		var toSend = terminalInput.value;
 
 		terminalHistory.push(toSend);
 
-		toSend = toSend.replace('\\n', '\n').replace('\\r', '\r');
+		toSend = unescaeForSerial(toSend);
 
 		if(document.getElementById('screenTerminal_lineEnding').value === 'yes')
 			toSend += '\n';

@@ -155,12 +155,14 @@ defineControl(function() {
 
 			function pressed() {
 				var toSend = control.getPropertyValue('sendOnPress');
+				toSend = unescapeForSerial(toSend);
 				if(toSend && toSend !== '') controlInterface.send(toSend);
 				control.svg.rect.style.fill = 'gold';
 			}
 
 			function released() {
 				var toSend = control.getPropertyValue('sendOnRelease');
+				toSend = unescapeForSerial(toSend);
 				if(toSend && toSend !== '') controlInterface.send(toSend);
 				control.svg.rect.style.fill = '#e7e7e9';
 			}
@@ -241,9 +243,255 @@ defineControl(function() {
 
 
 
+// toggle switch
+defineControl(function() {
+	var controlDefinition = {
+		typeID: 'toggleSwitch',
+		displayName: 'Switch',
+		buildSVG: function(control) {
 
-// toggleSwitch
+			var g = createSVGElement('g');
 
+			var rect = createSVGElement('rect');
+			svgAttr(rect, 'y', 0); svgAttr(rect, 'x', 0);
+			svgAttr(rect, 'rx', 100); svgAttr(rect, 'ry', 100);
+			svgAttr(rect, 'height', '200'); svgAttr(rect, 'width', 300);
+			//rect.style.fill = '#333333';
+			rect.style.fill = '#575759';
+			rect.style.stroke = '#333333';
+			rect.style.strokeWidth = 5;
+			g.appendChild(rect);
+			control.svg.rect = rect;
+
+			var slider = createSVGElement('g');
+			svgAttr(slider, 'transform', 'translate(100 100)');
+			control.svg.slider = slider;
+			control.state = 'left';
+			/*
+			var snapTo = control.getPropertyValue('snapTo');
+			if(snapTo === 'None') {
+				svgSetPosition(slider, sliderMinX, 100);
+			} else {
+				snap(control);
+			}*/
+
+			g.appendChild(slider);
+
+			var circle = createSVGElement('circle');
+			svgAttr(circle, 'r', 100);
+			circle.style.fill = '#e7e7e9';
+			circle.style.stroke = '#333333';
+			circle.style.strokeWidth = 5;
+			slider.appendChild(circle);
+			control.svg.circle = circle;
+
+			var keyLabel = createSVGElement('text');
+			//svgAttr(keyLabel, 'x', 100); svgAttr(keyLabel, 'y', 100);
+			svgAttr(keyLabel, 'text-anchor', 'middle');
+			svgAttr(keyLabel, 'alignment-baseline', 'middle');
+			svgAttr(keyLabel, 'font-size', '4em');
+			svgAttr(keyLabel, 'font-weight', 'bold');
+			keyLabel.textContent = control.getPropertyValue('keyboardShortcut') || '';
+			//keyLabel.x = 8; keyLabel.y = 50;
+			slider.appendChild(keyLabel);
+			control.svg.keyLabel = keyLabel;
+
+			var label = createSVGElement('text');
+			svgAttr(label, 'text-anchor', 'middle');
+			svgAttr(label, 'alignment-baseline', 'text-before-edge');
+			svgAttr(label, 'font-size', '2em');
+			svgAttr(label, 'transform', 'translate(150 210)');
+			label.textContent = control.getPropertyValue('label') || '';
+			g.appendChild(label);
+			control.svg.label = label;
+
+			var leftLabel = createSVGElement('text');
+			svgAttr(leftLabel, 'text-anchor', 'middle');
+			svgAttr(leftLabel, 'alignment-baseline', 'text-after-edge');
+			svgAttr(leftLabel, 'font-size', '2em');
+			svgAttr(leftLabel, 'font-weight', 'bold');
+			svgAttr(leftLabel, 'transform', 'translate(-20 100) rotate(-90)');
+			leftLabel.textContent = control.getPropertyValue('leftLabel') || '';
+			g.appendChild(leftLabel);
+			control.svg.leftLabel = leftLabel;
+
+			var rightLabel = createSVGElement('text');
+			svgAttr(rightLabel, 'text-anchor', 'middle');
+			svgAttr(rightLabel, 'alignment-baseline', 'text-before-edge');
+			svgAttr(rightLabel, 'font-size', '2em');
+			svgAttr(rightLabel, 'transform', 'translate(310 100) rotate(-90)');
+			rightLabel.textContent = control.getPropertyValue('rightLabel') || '';
+			g.appendChild(rightLabel);
+			control.svg.rightLabel = rightLabel;
+
+			return g;
+		},
+
+		wireEvents: function(control, controlInterface) {
+			var svg = control.svg;
+			var isPressed = false;
+
+			var slider= svg.slider;
+			slider.style.cursor = 'pointer';
+
+			function toggle() {
+				var toSend = control.getPropertyValue('sendOnToggle');
+				if(toSend && toSend !== '') {
+					toSend = unescapeForSerial(toSend);
+					controlInterface.send(toSend);
+				}
+
+				//console.log('test state ' + control.state);
+				if(control.state === 'left') {
+					svgAttr(slider, 'transform', 'translate(200 100)');
+					control.state = 'right';
+					svgAttr(svg.leftLabel, 'font-weight', '');
+					svgAttr(svg.rightLabel, 'font-weight', 'bold');
+					
+					toSend = control.getPropertyValue('sendOnRight');
+					if(toSend && toSend !== '') {
+						
+						toSend = unescapeForSerial(toSend);
+						controlInterface.send(toSend);
+					}
+				} else if(control.state === 'right') {
+					svgAttr(slider, 'transform', 'translate(100 100)');
+					control.state = 'left';
+					svgAttr(svg.leftLabel, 'font-weight', 'bold');
+					svgAttr(svg.rightLabel, 'font-weight', '');
+
+					toSend = control.getPropertyValue('sendOnLeft');
+					if(toSend && toSend !== '') {
+						toSend = unescapeForSerial(toSend);
+						controlInterface.send(toSend);
+					}
+				}
+			}
+
+			function pressed() {
+				toggle();
+				svg.circle.style.fill = 'gold';
+				isPressed = true;
+			}
+
+			function released() {
+				svg.circle.style.fill = '#e7e7e9';
+				isPressed = false;
+			}
+
+			addPointerListeners(slider, ['touchstart', 'mousedown'], function(e) {
+				pressed();
+				//toggle();
+			});
+
+
+			addPointerListeners(slider, ['touchend', 'mouseup'], function(e) {
+				released();
+			});
+
+			slider.addEventListener('mouseout', function(e) {
+				if(isPressed === true) released();
+			}, false);
+
+			var key = control.getPropertyValue('keyboardShortcut');
+			if(key && key !== '') {
+				controlInterface.makeShortcut(key, pressed, released);
+				control.svg.keyLabel.textContent = key;
+			}
+
+			
+			/*
+			var buttonPressed = false;
+
+
+			function pressed() {
+				var toSend = control.getPropertyValue('sendOnPress');
+				if(toSend && toSend !== '') controlInterface.send(toSend);
+				control.svg.rect.style.fill = 'gold';
+			}
+
+			function released() {
+				var toSend = control.getPropertyValue('sendOnRelease');
+				if(toSend && toSend !== '') controlInterface.send(toSend);
+				control.svg.rect.style.fill = '#e7e7e9';
+			}
+
+			var svg = control.svg;
+
+			[svg.rect, svg.keyLabel].forEach(function(element) {
+				addPointerListeners(element, ['touchstart', 'mousedown'], function(e) {
+					buttonPressed = true;
+					pressed();
+				});
+				element.style.cursor = 'pointer';
+			});
+
+			[svg.rect, svg.keyLabel].forEach(function(element) {
+				addPointerListeners(element, ['touchend', 'mouseup'], function(e) {
+					if(buttonPressed === true) released();
+					buttonPressed = false;
+				});
+			});
+
+			svg.rect.addEventListener('mouseout', function(e) {
+				if(buttonPressed === true) released();
+			}, false);
+
+			var key = control.getPropertyValue('keyboardShortcut');
+			if(key && key !== '') {
+				controlInterface.makeShortcut(key, pressed, released);
+				control.svg.keyLabel.textContent = key;
+			}
+			*/
+		},
+
+		properties: {
+			sendOnToggle: {
+				displayName: 'Send on toggle',
+				type: 'serial'
+			},
+						sendOnLeft: {
+				displayName: 'Send on switch to left',
+				type: 'serial'
+			},
+			sendOnRight: {
+				displayName: 'Send on switch to right',
+				type: 'serial'
+			},
+			label: {
+				displayName: 'Label',
+				type: 'label',
+				onChange: function(control, newValue, oldValue) {
+					control.svg.label.textContent = newValue;
+				}
+			},
+			keyboardShortcut: {
+				displayName: 'Key Shortcut',
+				type: 'keyboardShortcut',
+				onChange: function(control, newValue, oldValue) {
+					control.svg.keyLabel.textContent = newValue;
+				}
+			},
+			leftLabel: {
+				displayName: 'Left side label',
+				type: 'label',
+				onChange: function(control, newValue, oldValue) {
+					control.svg.leftLabel.textContent = newValue;
+				}
+			},
+			rightLabel: {
+				displayName: 'Right side label',
+				type: 'label',
+				onChange: function(control, newValue, oldValue) {
+					control.svg.rightLabel.textContent = newValue;
+				}
+			}
+		},
+
+	};
+
+	return controlDefinition;
+});
 
 
 
@@ -418,6 +666,7 @@ defineControl(function() {
 				var value = getSliderValue(control);
 				var toSend = control.getPropertyValue('sendOnChange');
 				if(toSend && toSend !== '') {
+					toSend = unescapeForSerial(toSend);
 					toSend = toSend.replace('?', value);
 					//console.log('send ',toSend);
 					controlInterface.send(toSend);
@@ -680,6 +929,7 @@ defineControl(function() {
 				var value = getSliderValue(control);
 				var toSend = control.getPropertyValue('sendOnChange');
 				if(toSend && toSend !== '') {
+					toSend = unescapeForSerial(toSend);
 					toSend = toSend.replace('?', value);
 					//console.log('send ',toSend);
 					controlInterface.send(toSend);
@@ -921,6 +1171,9 @@ defineControl(function() {
 			var lastDragPosition = {};
 			var dragTouchIdentifier;
 
+			var scaleFactor;
+			var svg = document.getElementById('screenControl_svg');
+
 			slider.style.cursor = 'pointer';
 
 
@@ -942,10 +1195,10 @@ defineControl(function() {
 					x: e.clientX, y: e.clientY
 				};
 				circle.style.fill = 'gold';
+				slider.style.cursor = 'none';
+				svg.style.cursor = 'none';
 			}, false);
 
-			var scaleFactor;
-			var svg = document.getElementById('screenControl_svg');
 
 			svg.addEventListener('touchmove', function(e) {
 				var touch;
@@ -975,6 +1228,7 @@ defineControl(function() {
 				};
 				var toSend = control.getPropertyValue('sendOnChange');
 				if(toSend && toSend !== '') {
+					toSend = unescapeForSerial(toSend);
 					toSend = toSend.replace(/\?/, value.x);
 					toSend = toSend.replace(/\?/, value.y);
 					controlInterface.send(toSend);
@@ -1030,6 +1284,8 @@ defineControl(function() {
 					isDragging = false;
 					snap(control);
 					sendCurrentValue();
+					slider.style.cursor = 'pointer';
+					svg.style.cursor = '';
 				}
 			};
 
