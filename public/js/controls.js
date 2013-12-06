@@ -164,7 +164,7 @@ var ControlInterface = (function () {
 			regexString = regexString.replace(character, '\\' + character);
 		});
 
-		regexString = regexString.replace(parameterCharacter, '(\\d+)');
+		regexString = regexString.replace(parameterCharacter, '(\-?\\d+)');
 		//return new RegeExp(regexString);
 		return regexString;
 	};

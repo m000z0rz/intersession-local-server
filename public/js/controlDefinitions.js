@@ -96,7 +96,9 @@ function getControlScale(svg) {
 }
 
 
-
+function map(value, fromMin, fromMax, toMin, toMax) {
+	return (value - fromMin) * (toMax - toMin) / (fromMax - fromMin) + toMin;
+}
 
 
 
@@ -528,10 +530,6 @@ defineControl(function() {
 	var sliderMinX = sliderRadius;
 	var sliderMaxX = sliderLength - sliderRadius;
 
-	function map(value, fromMin, fromMax, toMin, toMax) {
-		return (value - fromMin) * (toMax - toMin) / (fromMax - fromMin) + toMin;
-	}
-
 	var getSliderValue = function(control) {
 		var pos = svgGetPosition(control.svg.slider);
 		return Math.round(map(pos.x, sliderMinX, sliderMaxX, 0, 1023));
@@ -790,10 +788,6 @@ defineControl(function() {
 	var sliderMinY = sliderRadius;
 	var sliderMaxY = sliderLength - sliderRadius;
 
-	function map(value, fromMin, fromMax, toMin, toMax) {
-		return (value - fromMin) * (toMax - toMin) / (fromMax - fromMin) + toMin;
-	}
-
 	var getSliderValue = function(control) {
 		var pos = svgGetPosition(control.svg.slider);
 		return Math.round(map(pos.y, sliderMaxY, sliderMinY, 0, 1023));
@@ -1051,9 +1045,6 @@ defineControl(function() {
 
 	var sliderMaxRadius = backdropRadius - sliderRadius;
 
-	function map(value, fromMin, fromMax, toMin, toMax) {
-		return (value - fromMin) * (toMax - toMin) / (fromMax - fromMin) + toMin;
-	}
 
 	/*
 	var getSliderValue = function(control) {
@@ -1439,4 +1430,125 @@ defineControl(function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 // gauge, meter?
+defineControl(function() {
+	var angleSweepMin = 220;
+	var angleSweepMax = 0;
+	var angleOffset = -20;
+
+	var controlDefinition = {
+		typeID: 'gauge',
+		displayName: 'Gauge',
+		buildSVG: function(control) {
+			var g = createSVGElement('g');
+
+			var clipPath = createSVGElement('clipPath');
+			svgAttr(clipPath, 'id', 'gaugeClipPath');
+			g.appendChild(clipPath);
+			control.svg.clipPath = clipPath;
+
+			var clipRect = createSVGElement('rect');
+			svgAttr(clipRect, 'x', -150 - 5); svgAttr(clipRect, 'width', 300 + 5*2);
+			var clipHeight = 150 + 150 * Math.sin(Math.abs(angleOffset)/360*2*Math.PI);
+			svgAttr(clipRect, 'y', -150 - 5); svgAttr(clipRect, 'height', clipHeight + 5);
+			clipPath.appendChild(clipRect);
+			control.clipRect = clipRect;
+
+
+
+			var backdrop = createSVGElement('circle');
+			//svgAttr(backdrop, 'cx', 75); svgAttr(backdrop, 'cy', 75);
+			svgAttr(backdrop, 'r', 150);
+			backdrop.style.fill = '#e7e7e9';
+			backdrop.style.stroke = '#333333';
+			backdrop.style.strokeWidth = 5;
+			g.appendChild(backdrop);
+			control.svg.backdrop = backdrop;
+
+			svgAttr(backdrop, 'clip-path', 'url(#gaugeClipPath)');
+
+			var label = createSVGElement('text');
+			svgAttr(label, 'x', 0); svgAttr(label, 'y', clipHeight - 150 + 10);
+			svgAttr(label, 'text-anchor', 'middle');
+			svgAttr(label, 'alignment-baseline', 'text-before-edge');
+			svgAttr(label, 'font-size', '2em');
+			label.textContent = control.getPropertyValue('label') || '';
+			g.appendChild(label);
+			control.svg.label = label;
+
+
+			var needle = createSVGElement('line');
+			svgAttr(needle, 'x1', 0); svgAttr(needle, 'y1', 0);
+			svgAttr(needle, 'x2', 130); svgAttr(needle, 'y2', 0);
+			svgAttr(needle, 'transform', 'rotate(-200)');
+			needle.style.stroke = '#333333';
+			needle.style.strokeWidth = 10;
+			g.appendChild(needle);
+			control.svg.needle = needle;
+
+			var needleHub = createSVGElement('circle');
+			svgAttr(needleHub, 'r', 15);
+			needleHub.style.fill = '#333333';
+			g.appendChild(needleHub);
+
+			var bottomLine = createSVGElement('line');
+			var angleRad = -angleOffset/360 * 2 * Math.PI;
+			var x1 = -150 * Math.cos(angleRad),
+				x2 = 150 * Math.cos(angleRad),
+				y1 = - 150 * Math.sin(-angleRad),
+				y2 = y1;
+			svgAttr(bottomLine, 'x1', x1); svgAttr(bottomLine, 'y1', y1);
+			svgAttr(bottomLine, 'x2', x2); svgAttr(bottomLine, 'y2', y2);
+			bottomLine.style.stroke = '#333333';
+			bottomLine.style.strokeWidth = 5;
+			g.appendChild(bottomLine);
+
+
+
+			return g;
+		},
+		wireEvents: function(control, controlInterface) {
+			var svg = control.svg;
+			var needle = svg.needle;
+
+			var rx = control.getPropertyValue('onReceiveValue');
+			var rxRegexString = rx.replace(/\?/g, '()');
+			var rxRegex = new RegExp(rxRegexString);
+
+			controlInterface.watchForReceive(rx, function(value) {
+				//var value = params[0];
+				var needleAngle = map(value, 0, 1023, angleSweepMin, angleSweepMax) + angleOffset;
+				needleAngle = -needleAngle;
+				svgAttr(needle, 'transform', 'rotate(' + needleAngle + ')');
+			});
+
+		},
+		properties: {
+			label: {
+				displayName: 'Label',
+				type: 'label',
+				onChange: function(control, newValue, oldValue) {
+					control.svg.label.textContent = newValue;
+				}
+			},
+			onReceiveValue: {
+				displayName: 'Change value when received',
+				type: 'serial'
+			}
+		},
+	};
+
+	return controlDefinition;
+});
