@@ -164,7 +164,7 @@ var ControlInterface = (function () {
 			regexString = regexString.replace(character, '\\' + character);
 		});
 
-		regexString = regexString.replace(parameterCharacter, '(\-?\\d+)');
+		regexString = regexString.replace(parameterCharacter, '(\\-?\\d+)');
 		//return new RegeExp(regexString);
 		return regexString;
 	};
@@ -364,9 +364,11 @@ var Controller = (function () {
 			controllers[self.getCompiledID()] = thisJSON;
 			localStorage.setItem('controllers', JSON.stringify(controllers));
 
-			webSocket.emit('saveController', {controller: thisJSON}, function(data) {
-				if(callback && typeof callback === 'function') callback(data);
-			});
+			if(webSocket.socket.connected) {
+				webSocket.emit('saveController', {controller: thisJSON}, function(data) {
+					if(callback && typeof callback === 'function') callback(data);
+				});
+			}
 		};
 
 	};
@@ -387,18 +389,30 @@ var Controller = (function () {
 	Controller.fetch = function(forHostname, forPort, callback) {
 		var controllerJSON;
 		var compiledID = forHostname + '&' + forPort;
-		webSocket.emit('fetchController', { compiledID: compiledID }, function(data) {
-			if(data.err) {
-				console.log('controller fetch err ',err);
-				var controllers = localStorage.getItem('controllers');
-				controllerJSON = controllers[compiledID];
-				if(!controllerJSON || controllerJSON === '') callback();
-				else callback(JSON.parse(controllerJSON));
-			} else {
-				if(data.controller && data.controller !== '') callback(Controller.fromJSON(data.controller));
-				else callback();
-			}
-		});
+		var localFallback = function() {
+			var controllers = JSON.parse(localStorage.getItem('controllers'));
+			console.log('local: ', controllers);
+			controllerJSON = controllers[compiledID];
+			window.controllers = controllers;
+			console.log('compiled id ', compiledID);
+			console.log('controller JSON ', controllerJSON);
+			if(!controllerJSON || controllerJSON === '') callback();
+			else callback(Controller.fromJSON(controllerJSON));
+		};
+
+		if(webSocket.socket.connected) {
+			webSocket.emit('fetchController', { compiledID: compiledID }, function(data) {
+				if(data.err) {
+					console.log('controller fetch err ', data.err);
+					localFallback();
+				} else {
+					if(data.controller && data.controller !== '') callback(Controller.fromJSON(data.controller));
+					else callback();
+				}
+			});
+		} else {
+			localFallback();
+		}
 	};
 
 	return Controller;

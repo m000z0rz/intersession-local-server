@@ -157,15 +157,19 @@ defineControl(function() {
 
 			function pressed() {
 				var toSend = control.getPropertyValue('sendOnPress');
-				toSend = unescapeForSerial(toSend);
-				if(toSend && toSend !== '') controlInterface.send(toSend);
+				if(toSend && toSend !== '') {
+					toSend = unescapeForSerial(toSend);
+					controlInterface.send(toSend);
+				}
 				control.svg.rect.style.fill = 'gold';
 			}
 
 			function released() {
 				var toSend = control.getPropertyValue('sendOnRelease');
-				toSend = unescapeForSerial(toSend);
-				if(toSend && toSend !== '') controlInterface.send(toSend);
+				if(toSend && toSend !== '') {
+					toSend = unescapeForSerial(toSend);
+					controlInterface.send(toSend);
+				}
 				control.svg.rect.style.fill = '#e7e7e9';
 			}
 
@@ -1383,7 +1387,7 @@ defineControl(function() {
 				displayName: 'Label',
 				type: 'label',
 				onChange: function(control, newValue, oldValue) {
-					control.svg.buttonLabel.textContent = newValue;
+					control.svg.indicatorLabel.textContent = newValue;
 				}
 			},
 		},
@@ -1524,8 +1528,8 @@ defineControl(function() {
 			var needle = svg.needle;
 
 			var rx = control.getPropertyValue('onReceiveValue');
-			var rxRegexString = rx.replace(/\?/g, '()');
-			var rxRegex = new RegExp(rxRegexString);
+			//var rxRegexString = rx.replace(/\?/g, '()');
+			//var rxRegex = new RegExp(rxRegexString);
 
 			controlInterface.watchForReceive(rx, function(value) {
 				//var value = params[0];

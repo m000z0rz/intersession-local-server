@@ -376,7 +376,7 @@ var Bluetooth = (function() {
 //var webSocket = io.connect('http://192.168.1.2:8090');
 var webSocket = io.connect('http://localHost:8090');
 webSocket.on('connect', function() {
-	console.log('websocket connected');
+	console.log(webSocket);
 });
 
 
@@ -896,13 +896,11 @@ function navigate_screenTerminal(comPort, dontPushState) {
 	if(theControlInterface) theControlInterface.clearEvents();
 	shortcut.remove('Delete');
 
-	console.log('navigate termainl for ' + comPort);
 	Bluetooth.openPort(comPort, function(data) {
 		theRest();
 	});
 
 	function theRest() {
-		console.log('the rest');
 		// just to be sure
 		if(theControlInterface) theControlInterface.clearEvents();
 

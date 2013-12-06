@@ -99,7 +99,7 @@ socketIO.sockets.on('connection', function(socket) {
             });
 
             serialPort.on('error', function(err) {
-                console.log('sp on error, ', portName);
+                console.log('sp on error, ', portName, err);
                 spInfo.clients.forEach(function(client) {
                     client.socket.emit('portError', {portName: data.portName, err: err});
                 });
