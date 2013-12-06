@@ -860,10 +860,13 @@ function navigate_screenEditProperties(control, dontPushState) {
 			var select = document.createElement('select');
 			documentFragment.appendChild(select);
 			var option;
+			var propVal = control.getPropertyValue(propName);
 			property.values.forEach(function(value) {
 				option = document.createElement('option');
 				option.textContent = value;
-				if(property.defaultValue === value) option.selected = true;
+				if(value === propVal) {
+					option.selected = true;
+				}
 				select.appendChild(option);
 			});
 			select.addEventListener('change', function(e) {
@@ -950,7 +953,7 @@ function onResize() {
 	var terminal = document.getElementById('screenTerminal_terminal');
 	var footer = document.getElementById('screenTerminal_footer');
 	var terminalHeader = document.getElementById('screenTerminal_header');
-	console.log('inner height ', window.innerHeight, ' footer ', footer.offsetHeight, ' header ', terminalHeader.offsetHeight);
+	//console.log('inner height ', window.innerHeight, ' footer ', footer.offsetHeight, ' header ', terminalHeader.offsetHeight);
 	terminal.style.height = window.innerHeight - footer.offsetHeight - terminalHeader.offsetHeight - 20;
 	//console.log('terminal height')
 };

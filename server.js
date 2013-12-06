@@ -9,7 +9,7 @@ var SerialPort = serialport.SerialPort;
 var mongo = require('mongoskin');
 //var mongoskinstore = require('mongoskinstore');
 var mongoskinstore = require('./mongoskinstore');
-var mongodb = mongo.db('mongodb://admin:' + process.env['ROLLERBOTPASSWORD'] + '@paulo.mongohq.com:10018/rollerbot_test');
+var mongodb = mongo.db('mongodb://admin:' + process.env['ROLLERBOTPASSWORD'] + '@paulo.mongohq.com:10018/rollerbot_test?auto_reconnect');
 var mongoStore = new mongoskinstore({db: mongodb});
 
 //var WebSocket = require('ws');
