@@ -18,6 +18,7 @@ function getControlDefinitionByTypeID(typeID) {
 	return controlDefinitionByTypeID[typeID];
 }
 
+var svgns = 'http://www.w3.org/2000/svg';
 function createSVGElement(tagName) {
 	//console.log('create svg, svgns=' + svgns);
 	return document.createElementNS(svgns, tagName);
