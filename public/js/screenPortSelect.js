@@ -42,7 +42,7 @@ defineScreen(function (screen) {
 
 				var domHostname = screen.dom.hostname;
 				var domList = screen.dom.portList;
-
+				historyState.hostname = data.hostname;
 				domHostname.textContent = " on " + data.hostname;
 
 				clearChildren(domList);
@@ -58,7 +58,7 @@ defineScreen(function (screen) {
 				domList.appendChild(fragment);
 
 				//console.log('navigate_screenPortSelect state ', state);
-				if(state && state.comPort) Bluetooth.closePort(state.comPort);
+				if(historyState && historyState.comPort) Bluetooth.closePort(historyState.comPort);
 
 				//switchScreen('screenPortSelect');
 			});
@@ -67,7 +67,7 @@ defineScreen(function (screen) {
 			//   to state.comPort; it will be overwritten with undefined when navigation
 			//   is complete
 			//console.log('navigate_screenPortSelect state ', state);
-			if(state && state.comPort) Bluetooth.closePort(state.comPort);
+			if(historyState && historyState.comPort) Bluetooth.closePort(historyState.comPort);
 			//if(dontPushState === 'replace') history.replaceState(state, '', '/screenPortSelect');
 			//else if(!dontPushState) history.pushState(state,"",'/screenPortSelect');
 
@@ -84,7 +84,7 @@ defineScreen(function (screen) {
 				li.appendChild(h2);
 				li.appendChild(small);
 				li.addEventListener('click', function(e) {
-					screen.navigateTo('screenControlSelect', {port: port.portName});
+					screen.navigateTo('screenControlSelect', {comPort: port.portName});
 					//navigate_screenControlSelect(port.portName);
 				});
 				return li;

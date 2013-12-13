@@ -43,15 +43,15 @@ defineScreen(function (screen) {
 			screen.buildTitleButton(
 				'screenTerminal_gotoEdit', 'Edit',
 				function() {
-					screen.navigateTo('screenEdit');
-					//navigate_screenControl(state.comPort, 'replace');
+					screen.navigateTo('screenEdit', {comPort: historyState.comPort});
+					//navigate_screenControl(historyState.comPort, 'replace');
 				}
 			);
 
 			screen.buildTitleButton(
 				'screenTerminal_gotoControl', 'Control',
 				function() {
-					screen.navigateTo('screenControl');
+					screen.navigateTo('screenControl', {comPort: historyState.comPort});
 				}
 			);
 
@@ -92,7 +92,7 @@ defineScreen(function (screen) {
 				console.log('terminal send ', toSend);
 
 				thisFromTerminal = true;
-				Bluetooth.sendOnPort(state.comPort, toSend);
+				Bluetooth.sendOnPort(historyState.comPort, toSend);
 				thisFromTerminal = false;
 
 				if(terminalHistory.length > terminalHistoryMaxItems) terminalHistory = terminalHistory.slice(terminalHistory.length - terminalHistoryMaxItems, terminalHistoryMaxItems);
@@ -135,7 +135,7 @@ defineScreen(function (screen) {
 			var targetTerminalElement;
 			var makeTerminalOnData = function(source) {
 				return function(data) {
-					if(data.portName === state.comPort) {
+					if(data.portName === historyState.comPort) {
 						terminalAddData(source, data.serialData);
 					}
 				};
@@ -180,6 +180,8 @@ defineScreen(function (screen) {
 
 		},
 		onNavigateTo: function(screen, options) {
+			// options: comPort
+			// state: 
 			Bluetooth.openPort(comPort, function(data) {
 				theRest();
 			});
@@ -189,7 +191,7 @@ defineScreen(function (screen) {
 				//var header = document.getElementById('screenTerminal_header');
 				//header.textContent = 'Terminal on ' + comPort;
 				titleBar.textContent = 'Terminal on ' + options.comPort;
-				state.comPort = options.comPort;
+				historyState.comPort = options.comPort;
 				//if(dontPushState === 'replace') history.replaceState(state, '', '/screenTerminal/' + comPort);
 				//else if(!dontPushState) history.pushState(state,'','/screenTerminal/' + comPort)
 				//switchScreen('screenTerminal');
