@@ -40,18 +40,18 @@ defineScreen(function (screen) {
 
 
 			screen.buildTitleBar('Terminal');
-			screen.buildTitleButton(
+			screen.dom.gotoEdit = screen.buildTitleButton(
 				'screenTerminal_gotoEdit', 'Edit',
 				function() {
-					screen.navigateTo('screenEdit', {comPort: historyState.comPort});
+					screen.navigateTo('screenEdit', screen.urlOptions);
 					//navigate_screenControl(historyState.comPort, 'replace');
 				}
 			);
 
-			screen.buildTitleButton(
+			screen.dom.gotoControl = screen.buildTitleButton(
 				'screenTerminal_gotoControl', 'Control',
 				function() {
-					screen.navigateTo('screenControl', {comPort: historyState.comPort});
+					screen.navigateTo('screenControl', screen.urlOptions);
 				}
 			);
 
@@ -65,6 +65,7 @@ defineScreen(function (screen) {
 			footer.id = 'screenTerminal_footer';
 			footer.innerHTML = "<input id='screenTerminal_input' type='text' style='border: 1px solid #333333; width: 80%;' /> <button id='screenTerminal_send'>Send</button>    <br/>    <label for='screenTerminal_autoscroll'>Autoscroll</label><input type='checkbox' id='screenTerminal_autoscroll' checked />    <span style='padding-left: 40px;'>    <label for='screenTerminal_lineEnding'>Send newline (\\n) on each send</label>    <select id='screenTerminal_lineEnding'>    <option value='no' default>No</option>    <option value='yes'>Yes</option>    </select>";
 			screen.dom.footer = footer;
+			div.appendChild(footer);
 
 
 
@@ -179,19 +180,37 @@ defineScreen(function (screen) {
 			*/
 
 		},
-		onNavigateTo: function(screen, options) {
+		makeURL: function(urlOptions) {
+			var url = '/screenTerminal';
+			var pieces = ['botID', 'port', 'controllerID'];
+			pieces.forEach(function(piece) {
+				if(urlOptions[piece]) url += '/' + piece + '/' + urlOptions[piece];
+			});
+
+			return url;
+		},
+		onNavigateTo: function(screen, urlOptions, otherOptions) {
 			// options: comPort
 			// state: 
-			Bluetooth.openPort(comPort, function(data) {
+
+			if(urlOptions.controllerID === undefined) {
+				screen.dom.gotoEdit.style.display = 'none';
+				screen.dom.gotoControl.style.display = 'none';
+			} else {
+				screen.dom.gotoEdit.style.display = 'inline';
+				screen.dom.gotoControl.style.display = 'inline';
+			}
+
+			Bluetooth.openPort(urlOptions.port, function(data) {
 				theRest();
 			});
 
 			function theRest() {
-				var titleBar = screen.dom.titleBar;
+				//var titleBar = screen.dom.titleBar;
 				//var header = document.getElementById('screenTerminal_header');
 				//header.textContent = 'Terminal on ' + comPort;
-				titleBar.textContent = 'Terminal on ' + options.comPort;
-				historyState.comPort = options.comPort;
+				screen.dom.titleElement.textContent = 'Terminal on ' + urlOptions.port;
+				//historyState.comPort = options.comPort;
 				//if(dontPushState === 'replace') history.replaceState(state, '', '/screenTerminal/' + comPort);
 				//else if(!dontPushState) history.pushState(state,'','/screenTerminal/' + comPort)
 				//switchScreen('screenTerminal');

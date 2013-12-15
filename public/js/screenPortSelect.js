@@ -1,13 +1,3 @@
-	/*
-	<div id="screenPortSelect" class="screen menu">
-		<div id="portListHeader">
-			<h1>Ports<span id="hostname"></span></h1>
-		</div>
-		<ul id="portList"></ul>
-	</div>
-	*/
-
-// screenPortSelect
 defineScreen(function (screen) {
 	return {
 		name: 'screenPortSelect',
@@ -18,10 +8,10 @@ defineScreen(function (screen) {
 		},
 		buildDOM: function (screen, div) {
 			var header = document.createElement('div');
-			header.id = 'screenPortSelect_portListHeader';
+			//header.id = 'screenPortSelect_portListHeader';
 
 			var h1 = document.createElement('h1');
-			h1.textContent = 'Ports';
+			h1.textContent = 'Select Port';
 
 			var hostname = document.createElement('span');
 			screen.dom.hostname = hostname;
@@ -31,18 +21,27 @@ defineScreen(function (screen) {
 			div.appendChild(header);
 
 			var portList = document.createElement('ul');
-			portList.id = 'screenPortSelect_portList';
+			//portList.id = 'screenPortSelect_portList';
 			screen.dom.portList = portList;
 			div.appendChild(portList);
 		},
-		onNavigateTo: function(screen, params) {
+		makeURL: function(urlOptions) {
+			var url = '/screenPortSelect';
+			var pieces = ['botID'];
+			pieces.forEach(function(piece) {
+				url += '/' + piece + '/' + urlOptions[piece];
+			});
+
+			return url;
+		},
+		onNavigateTo: function(screen, urlOptions, otherOptions) {
 			// cache old comPort from state 
 			Bluetooth.listPorts(function(data) {
 				var ports = data.ports;
 
 				var domHostname = screen.dom.hostname;
 				var domList = screen.dom.portList;
-				historyState.hostname = data.hostname;
+				//historyState.hostname = data.hostname;
 				domHostname.textContent = " on " + data.hostname;
 
 				clearChildren(domList);
@@ -58,7 +57,7 @@ defineScreen(function (screen) {
 				domList.appendChild(fragment);
 
 				//console.log('navigate_screenPortSelect state ', state);
-				if(historyState && historyState.comPort) Bluetooth.closePort(historyState.comPort);
+				//if(historyState && historyState.comPort) Bluetooth.closePort(historyState.comPort);
 
 				//switchScreen('screenPortSelect');
 			});
@@ -84,7 +83,11 @@ defineScreen(function (screen) {
 				li.appendChild(h2);
 				li.appendChild(small);
 				li.addEventListener('click', function(e) {
-					screen.navigateTo('screenControlSelect', {comPort: port.portName});
+					if(otherOptions && otherOptions.port && otherOptions.port !== port.portName) Bluetooth.closePort(otherOptions.port);
+					screen.navigateTo('screenControlPanel', {
+						botID: urlOptions.botID,
+						port: port.portName
+					});
 					//navigate_screenControlSelect(port.portName);
 				});
 				return li;

@@ -26,15 +26,24 @@ defineScreen(function (screen) {
 			screen.dom.propertiesDiv = propertiesDiv;
 			div.appendChild(propertiesDiv);
 		},
-		onNavigateTo: function(screen, options) {
-			if(!historyState || !historyState.comPort) {
+		makeURL: function(urlOptions) {
+			var url = '/screenEditProperties';
+			var pieces = ['botID', 'port', 'controllerID'];
+			pieces.forEach(function(piece) {
+				url += '/' + piece + '/' + urlOptions[piece];
+			});
+
+			return url;
+		},
+		onNavigateTo: function(screen, urlOptions, otherOptions) {
+			if(!otherOptions || !otherOptions.control) {
 				// looks like we're coming here fresh, not from an edit screen, maybe a
 				// pasted url
 				// redirect
 				window.location = '/';
 			}
 
-			var control = options.control;
+			var control = otherOptions.control;
 			var def = control.controlDefinition;
 			screen.dom.header.textContent = def.displayName + ' Properties';
 			var propertiesDiv = screen.dom.propertiesDiv;

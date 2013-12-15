@@ -26,7 +26,7 @@ defineScreen(function (screen) {
 			function clearSelection() {
 				var oldControl = screen.selectedControl;
 				if(oldControl) oldControl.element.style.opacity = 1;
-				selectedControl = undefined;
+				screen.selectedControl = undefined;
 				document.getElementById('screenEdit_properties').className = 'titleIconButtonDeactivated';
 				document.getElementById('screenEdit_delete').className = 'titleIconButtonDeactivated';
 			}
@@ -97,7 +97,7 @@ defineScreen(function (screen) {
 				}, false); 
 				g.addEventListener('dblclick', function(e) {
 					//navigate_screenEditProperties(control);
-					screen.navigateTo('screenEditProperties', {control: control});
+					screen.navigateTo('screenEditProperties', {}, {control: control});
 				}, false);
 				g.addEventListener('mouseup', function(e) {
 					screen.isDragging = false;
@@ -111,7 +111,7 @@ defineScreen(function (screen) {
 						// double click
 						setTimeout(function() {
 							//navigate_screenEditProperties(control);
-							screen.navigateTo('screenEditProperties', {control: control});
+							screen.navigateTo('screenEditProperties', {}, {control: control});
 						}, 0);
 					}
 
@@ -125,10 +125,29 @@ defineScreen(function (screen) {
 			screen.putControl = putControl;
 
 			screen.buildTitleBar('Edit');
+
+			var nameEdit = document.createElement('input');
+			screen.dom.nameEdit = nameEdit;
+			var disableNameSave = false;
+			screen.setNameWithoutSave = function(newName) {
+				disableNameSave = true;
+				nameEdit.value = newName;
+				disableNameSave = true;
+			};
+			var saveTimeoutID;
+			var saveTimeoutDelay = 300;
+			screen.dom.nameEdit.addEventListener('change', function(e) {
+				if(saveTimeoutID) window.clearTimeout(saveTimeoutID);
+				saveTimeoutID = window.setTimeout(function () {
+					screen.controller.name(nameEdit.value);
+				}, saveTimeoutDelay);
+			});
+			screen.dom.titleBar.appendChild(nameEdit);
+
 			screen.buildTitleButton(
 				'screenEdit_gotoControl', 'Control',
 				function() {
-					screen.navigateTo('screenControl', {comPort: historyState.comPort});
+					screen.navigateTo('screenControl', screen.urlOptions);
 					//navigate_screenControl(state.comPort, 'replace');
 				}
 			);
@@ -136,7 +155,7 @@ defineScreen(function (screen) {
 			screen.buildTitleButton(
 				'screenEdit_gotoTerminal', 'Terminal',
 				function() {
-					screen.navigateTo('screenTerminal', {comPort: historyState.comPort});
+					screen.navigateTo('screenTerminal', screen.urlOptions);
 				}
 			);
 
@@ -259,33 +278,50 @@ defineScreen(function (screen) {
 			//svg.viewbox='0 0 2000 1000'
 
 		},
-		onNavigateTo: function(screen, options) {
+		makeURL: function(urlOptions) {
+			var url = '/screenEdit';
+			var pieces = ['botID', 'port', 'controllerID'];
+			pieces.forEach(function(piece) {
+				url += '/' + piece + '/' + urlOptions[piece];
+			});
+
+			return url;
+		},
+		onNavigateTo: function(screen, urlOptions, otherOptions) {
 			// options: comPort
 			// state: hostname
 
-			if(!state.controller) {
+			//if(!state.controller) {
 				//fresh, need controller
-				Controller.fetch(historyState.hostname, options.comPort, function(controller) {
+				//Controller.fetch(historyState.hostname, options.comPort, function(controller) {
+				//historyState.controllerID = urlOptions.controllerID;
+				console.log('fetch by id ' + urlOptions.controllerID);
+				Controller.fetchByID(urlOptions.controllerID, function(controller) {
 					if(!controller) {
-						screen.controller = new Controller(historyState.hostname, options.comPort);
+						console.log('couldn\'t fetch controller');
+						//screen.controller = new Controller(historyState.hostname, options.comPort);
 					} else {
 						screen.controller = controller;
 					}
 
 					theRest();
 				});
-			} else {
-				// can do it directly
-				screen.controller = state.controller;
-				theRest();	
-			}
+			//} else {
+			//	// can do it directly
+			//	screen.controller = state.controller;
+			//	theRest();	
+			//}
 
 			shortcut.add('Delete', screen.deleteControl);
 
 			function theRest() {
-				state.controller = screen.controller;
+				//state.controller = screen.controller;
+				screen.clearSelection();
 				//var editSVG = document.getElementById('screenEdit_svg');
 				var editSVG = screen.dom.svg;
+				var controllerName = screen.controller.name();
+				if(controllerName) screen.setNameWithoutSave(screen.controller.name());
+				else screen.setNameWithoutSave('');
 				//clearChildren(editSVG);
 				clearSVG(editSVG);
 				screen.controller.controls.forEach(function(control) {
@@ -293,7 +329,7 @@ defineScreen(function (screen) {
 				});
 
 
-				historyState.comPort = options.comPort;
+				//historyState.comPort = options.comPort;
 				//if(dontPushState === 'replace') history.replaceState(state, '', '/screenEdit/' + comPort);
 				//else if(!dontPushState) history.pushState(state,'','/screenEdit/' + comPort);
 				//switchScreen('screenEdit');

@@ -76,6 +76,17 @@
 			border-radius: 3px;
 		}
 
+		.button {
+			border: 1px solid #e1e1e8;
+			border-radius: 3px;
+			background-color: #e7e7e9;
+			cursor: pointer;
+		}
+
+		.button:hover {
+			background-color: #ffffff;
+		}
+
 
 		ul li.even {
 			background-color: #e7e7e9;
@@ -159,97 +170,9 @@
 
 <div id="screensDiv">
 
-	<!--
-	<div id="screenPortSelect" class="screen menu">
-		<div id="portListHeader">
-			<h1>Ports<span id="hostname"></span></h1>
-		</div>
-		<ul id="portList"></ul>
-	</div>
-	-->
-
-	<!--
-	<div id="screenControlSelect" class="screen menu">
-		<div id="controlSelect">
-			<h1 id="screenControlSelect_COM"></h1>
-			<small class="sub">Microsoft</small>
-		</div>
-		<ul>
-			<li class="odd clickable" id="screenControlSelect_Control"><h2>Control</h2></li>
-			<li class="even clickable" id="screenControlSelect_Edit"><h2>Edit</h2></li>
-			<li class="odd clickable" id="screenControlSelect_Terminal"><h2>Terminal</h2></li>
-			<li class="even"><h2>Bot ID <input type="text" value="01"></input></h2></li>
-		</ul>
-	</div>
--->
-
-
-	<!--
-	<div id="screenControl" class="screen full">
-		<div class='titleBar' id='screenControl_titleBar'>
-			<h1 style='display: inline;'>Control</h1>
-			<span id='screenControl_gotoEdit' class='titleIconButton'>Edit</span>
-			<span id='screenControl_gotoTerminal' class='titleIconButton'>Terminal</span>
-		</div>
-
-		<svg id='screenControl_svg' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www3.org/1999/xlink' viewbox='0 0 2000 1000'>
-		</svg>
-	</div>
-	-->
-
-
-	<!--
-	<div id="screenEdit" class="screen full">
-		<div class='titleBar' id='screenEdit_titleBar'>
-			<h1 style='display: inline;'>Edit</h1>
-			<span id='screenEdit_gotoControl' class='titleIconButton'>Control</span>
-			<span id='screenEdit_gotoTerminal' class='titleIconButton'>Terminal</span>
-			<span id='screenEdit_delete' class='titleIconButtonDeactivated'>Delete</span>
-			<span id='screenEdit_properties' class='titleIconButtonDeactivated'>Properties</span>
-			<span id='screenEdit_addControl' class='titleIconButton'>+</span>
-		</div>
-		<div id='screenEdit_addControlMenu'
-			style='position: absolute; border: 1px solid black; border-radius: 3px; display: none; background-color: #ffffff;'>
-			<h1>Controls</h1>
-			<ul id='screenEdit_addControlList'>
-			</ul>
-		</div>
-		<svg id='screenEdit_svg' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewbox='0 0 2000 1000'>
-		</svg>
-	</div>
-	-->
-
-	<!--
-	<div id='screenEditProperties' class='screen menu'>
-		<h1 id='screenEditProperties_header'>Properties</h1>
-		<div id='screenEditProperties_div'></div>
-	</div>
-	-->
-
-
-
-	<!--
-	<div id='screenTerminal' class='screen full menu' style='padding: 0px;'>
-		<h1 id='screenTerminal_header'>Terminal</h1>
-		<div id='screenTerminal_terminal' class='terminal'
-				></div>
-		<div id='screenTerminal_footer'
-				style='position: absolute; bottom: 0px; height: 60px; box-sizing: border-box; width: 100%;'>
-			<input id='screenTerminal_input' type='text' style='border: 1px solid #333333; width: 80%;' /> <button id='screenTerminal_send'>Send</button>
-			<br/>
-			<label for='screenTerminal_autoscroll'>Autoscroll</label><input type='checkbox' id='screenTerminal_autoscroll' checked />
-			<span style='padding-left: 40px;'>
-			<label for='screenTerminal_lineEnding'>Send newline (\n) on each send</label>
-			<select id='screenTerminal_lineEnding'>
-				<option value='no' default>No</option>
-				<option value='yes'>Yes</option>
-			</select>
-
-		</div>
-	</div>
-	-->
-
 </div>
+
+
 
 <!--<script src="http://localhost:8080/socket.io/socket.io.js"></script>-->
 <script src="/socket.io/socket.io.js"></script>
@@ -260,12 +183,16 @@
 
 
 <script type='text/javascript' src='/js/screens.js'></script>
-<script type='text/javascript' src='/js/screenControlSelect.js'></script>
+<!--<script type='text/javascript' src='/js/screenControlSelect.js'></script>-->
 <script type='text/javascript' src='/js/screenPortSelect.js'></script>
 <script type='text/javascript' src='/js/screenTerminal.js'></script>
 <script type='text/javascript' src='/js/screenControl.js'></script>
 <script type='text/javascript' src='/js/screenEdit.js'></script>
 <script type='text/javascript' src='/js/screenEditProperties.js'></script>
+
+
+<script type='text/javascript' src='/js/screenBotSelect.js'></script>
+<script type='text/javascript' src='/js/screenControlPanel.js'></script>
 
 <script type='text/javascript'>
 
@@ -293,31 +220,22 @@ var Bluetooth = (function() {
 
 
 	if(hostType === "web") {
-
-		// web bluetooth ////////////////////////////////////////////////////////////////////////////////////
-		//var socket = new io.Socket('localhost',{
-		//	port: 8080
-		//});
-		//socket.connect(); 
-		//var socket = io.connect('http://' + window.location.host);
 		Bluetooth.isReady = false;
 		var socket = io.connect(window.location.origin);
 
 		socket.on('connect', function () {
-			console.log('bt socket opened');
-			//Bluetooth.isReady = true;
-			//Bluetooth.emit('ready');
+			//console.log('bt socket opened');
 		});
 
 		socket.on('greeting', function(data) {
-			console.log('greeting received from ' + data.hostname);
+			//console.log('greeting received from ' + data.hostname);
 			state.hostname = data.hostname;
 			Bluetooth.isReady = true;
 			Bluetooth.emit('ready');
 		})
 
 		socket.on('disconnect', function() {
-			console.log('socket disconnected');
+			//console.log('socket disconnected');
 		});
 
 		socket.on('error', function(err) {
@@ -388,8 +306,8 @@ var Bluetooth = (function() {
 
 
 // socket to web server /////////////////////////////////////////////
-//var webSocket = io.connect('http://192.168.1.2:8090');
-var webSocket = io.connect('http://localHost:8090');
+var webSocket = io.connect('http://192.168.1.2:8090');
+//var webSocket = io.connect('http://localHost:8090');
 webSocket.on('connect', function() {
 	console.log(webSocket);
 });
@@ -412,169 +330,17 @@ var state = {};
 var historyState = {};
 
 
-/*
-var screenEdit_selectedControl;
-var screenEdit_isDragging = false;
-var screenEdit_lastDragPosition = {};
-
-function getPortListElement(port) {
-	//<li class="odd"><h2>COM1</h2><small class="sub">Microsoft</small></li>
-	var li = document.createElement("li");
-	li.className = "clickable";
-	var h2 = document.createElement("h2");
-	h2.textContent = port.portName;
-	var small = document.createElement("small");
-	small.textContent = port.manufacturer || "";
-	//port.isOpen
-	small.className = "sub";
-	li.appendChild(h2);
-	li.appendChild(small);
-	li.addEventListener('click', function(e) {
-		navigate_screenControlSelect(port.portName);
-	});
-	return li;
-}
-
-function getControlTypeListElement(controlDefinition) {
-	var definition = controlDefinition;
-	var li = document.createElement('li');
-	li.className = 'clickable';
-	var h2 = document.createElement('h2');
-	h2.textContent = definition.displayName;
-	li.appendChild(h2);
-	li.addEventListener('click', function(e) {
-		var menuDiv = document.getElementById('screenEdit_addControlMenu');
-		menuDiv.style.display = 'none';
-
-		var newControl = new Control(definition, 200, 200);
-		theController.addControl(newControl);
-		screenEdit_putControl(newControl);
-	})
-	return li;
-}
-
-function screenEdit_putControl(control) {
-	var svg = document.getElementById('screenEdit_svg');
-	var g = control.buildForEdit();
-	svg.appendChild(g);
-	svgAttr(g, 'class', 'draggable');
-
-	
-	g.addEventListener('touchstart', function(e) {
-		var touch = e.touches[0];
-		screenEdit_selectControl(control);
-
-		screenEdit_isDragging = true;
-		screenEdit_lastDragPosition = {
-			x: touch.clientX, y: touch.clientY
-		};
-		e.preventDefault();
-		return false;
-	}, false);
-	g.addEventListener('mousedown', function(e) {
-		screenEdit_selectControl(control);
-
-		screenEdit_isDragging = true;
-		screenEdit_lastDragPosition = {
-			x: e.clientX, y: e.clientY
-		};
-	}, false);
-	g.addEventListener('touchmove', function(e) {
-		var touch = e.touches[0];
-		var editSVG = document.getElementById('screenEdit_svg');
-		if(screenEdit_isDragging) {
-			var scaleFactor;
-			if(editSVG.offsetWidth > 2*editSVG.offsetHeight) {
-				// width is in excess; height controls scale
-				var scaleFactor = 1000 / editSVG.offsetHeight;
-			} else {
-				// height is in excess; width controls scale
-				var scaleFactor = 2000 / editSVG.offsetWidth;
-			}
-			var dX = touch.clientX - screenEdit_lastDragPosition.x;
-			var dY = touch.clientY - screenEdit_lastDragPosition.y;
-			screenEdit_selectedControl.translate(scaleFactor * dX, scaleFactor * dY);
-			screenEdit_lastDragPosition = {x: touch.clientX, y: touch.clientY};
-			e.preventDefault();
-			return false;
-		} 
-	}, false);
-
-	g.addEventListener('click', function(e) {
-		e.stopPropagation(); // stop it from going to svg which deselects;
-	}, false); 
-	g.addEventListener('dblclick', function(e) {
-		 navigate_screenEditProperties(control);
-	}, false);
-	g.addEventListener('mouseup', function(e) {
-		screenEdit_isDragging = false;
-		theController.save();
-	}, false);
-
-	var lastTouchStart;
-	g.addEventListener('touchend', function(e) {
-		var thisTouchStart = (new Date()).valueOf();
-		if(thisTouchStart - lastTouchStart < 300) {
-			// double click
-			setTimeout(function() {
-				navigate_screenEditProperties(control);
-			}, 0);
-		}
-
-		lastTouchStart = thisTouchStart;
-		screenEdit_isDragging = false;
-		theController.save();
-		e.preventDefault();
-		return false;
-	}, false);
-}
-*/
-
-/*
-function screenControl_putControl(control) {
-	var svg = document.getElementById('screenControl_svg');
-	var g = control.buildForControl(theControlInterface);
-	svg.appendChild(g);
-	//svgAttr(g, 'style', 'cursor: pointer;');
-
-}
-*/
 
 function asArray(pseudoArray) {
 	return Array.prototype.slice.call(pseudoArray);
 }
 
-/*
-function svgMatrixToTransformText(svgMatrix) {
-	var m = svgMatrix;
-	return 'matrix(' + m.a + ' ' + m.b + ' ' + m.c + ' ' + m.d + ' ' + m.e + ' ' + m.f + ')';
-}
-*/
 
 function clearChildren(element) {
 	while(element.firstChild) {
 		element.removeChild(element.firstChild);
 	}
 }
-
-/*
-function screenEdit_selectControl(control) {
-	var oldControl = screenEdit_selectedControl;
-	if(oldControl) oldControl.element.style.opacity = 1;
-	screenEdit_selectedControl = control;
-	control.element.style.opacity = 0.5;
-	document.getElementById('screenEdit_properties').className = 'titleIconButton';
-	document.getElementById('screenEdit_delete').className = 'titleIconButton';
-}
-
-function screenEdit_clearSelection() {
-	var oldControl = screenEdit_selectedControl;
-	if(oldControl) oldControl.element.style.opacity = 1;
-	screenEdit_selectedControl = undefined;
-	document.getElementById('screenEdit_properties').className = 'titleIconButtonDeactivated';
-	document.getElementById('screenEdit_delete').className = 'titleIconButtonDeactivated';
-}
-*/
 
 function clearSVG(svg) {
 	clearChildren(svg);
@@ -631,46 +397,63 @@ window.onpopstate = function(e) {
 };
 
 function handleNavigate(dontPushState) {
-	console.log('handleNavigate called');
+	if(!Bluetooth.isReady) return;
+	var urlPath = window.location.pathname.split('/');
+	var pushState = !dontPushState;
+	var urlOptions = {};
+
+	var screenName = urlPath[1];
+	if(screenName === undefined || screenName === '') screenName = 'screenBotSelect';
+	for(var i = 2; i < urlPath.length; i += 2) {
+		 urlOptions[urlPath[i]] = urlPath[i+1];
+	}
+
+
+	console.log('handleNavigate to screenName', screenName, ', pushState? ', pushState);
+	Screens.navigateTo(screenName, urlOptions, undefined, pushState);
+}
+
+function handleNavigateOld(dontPushState) {
+	//console.log('handleNavigate called');
 	if(!Bluetooth.isReady) return; // skip initial window.onpopstate until bt is ready
-		//console.log('handle navigate');
-		//if(!state) {
-		// initial navigation
-		var urlPath = window.location.pathname.split('/');
+	//console.log('handle navigate');
+	//if(!state) {
+	// initial navigation
+	var urlPath = window.location.pathname.split('/');
 
-		var screenName = urlPath[1];
-		var comPort = urlPath[2];
-		var pushState = !dontPushState;
+	var screenName = urlPath[1];
+	var comPort = urlPath[2];
+	var pushState = !dontPushState;
 
-		//console.log('handle navigate state ', state);
-		if(screenName === undefined || screenName === '' || screenName === 'screenPortSelect') {
-			//navigate_screenPortSelect(dontPushState);
-			screenName = 'screenPortSelect';
-			options = {};
-		} else if(screenName === 'screenPortSelect') {
-			options = {};
-			//navigate_screenPortSelect(dontPushState);
-		} else if(screenName === 'screenControlSelect') {
-			options = {comPort: comPort}; 
-			//navigate_screenControlSelect(comPort, dontPushState);
-		} else if(screenName === 'screenEdit') {
-			options = {comPort: comPort};
-			//navigate_screenEdit(comPort, dontPushState);
-		} else if(screenName === 'screenControl') {
-			//navigate_screenControl(comPort, dontPushState);
-			options = {comPort: comPort};
-		} else if(screenName === 'screenEditProperties') {
-			//navigate_screenEditProperties();
-			// redirect to home page
-			//navigate_screenPortSelect('replace');
-			screenName = 'screenPortSelect';
-		} else if(screenName === 'screenTerminal') {
-			//navigate_screenTerminal(comPort, dontPushState);
-			options = {comPort: comPort};
-		}
+	//console.log('handle navigate state ', state);
+	if(screenName === undefined || screenName === '' || screenName === 'screenPortSelect') {
+		//navigate_screenPortSelect(dontPushState);
+		screenName = 'screenPortSelect';
+		options = {};
+	} else if(screenName === 'screenPortSelect') {
+		options = {};
+		//navigate_screenPortSelect(dontPushState);
+	} else if(screenName === 'screenControlSelect') {
+		options = {comPort: comPort}; 
+		//navigate_screenControlSelect(comPort, dontPushState);
+	} else if(screenName === 'screenEdit') {
+		options = {comPort: comPort};
+		//navigate_screenEdit(comPort, dontPushState);
+	} else if(screenName === 'screenControl') {
+		//navigate_screenControl(comPort, dontPushState);
+		options = {comPort: comPort};
+	} else if(screenName === 'screenEditProperties') {
+		//navigate_screenEditProperties();
+		// redirect to home page
+		//navigate_screenPortSelect('replace');
+		screenName = 'screenPortSelect';
+	} else if(screenName === 'screenTerminal') {
+		//navigate_screenTerminal(comPort, dontPushState);
+		options = {comPort: comPort};
+	}
 
-		console.log('navigating to! pushState?', pushState, ' screenName', 'screenName');
-		Screens.navigateTo(screenName, {}, pushState);
+	console.log('navigating to! pushState?', pushState, ' screenName', screenName);
+	Screens.navigateTo(screenName, options, pushState);
 	//}
 }
 
@@ -678,45 +461,6 @@ function handleNavigate(dontPushState) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-function navigate_screenControlSelect(comPort, dontPushState) {
-	if(theControlInterface) theControlInterface.clearEvents();
-	shortcut.remove('Delete');
-
-	Controller.fetch(state.hostname, comPort, function(controller) {
-		if(!controller) {
-			theController = new Controller(state.hostname, comPort);
-		} else {
-			theController = controller;
-		}
-
-		var domCOMID = document.getElementById('screenControlSelect_COM');
-		domCOMID.textContent = comPort;
-		state.comPort = comPort;
-
-		console.log('screen control select ', state);
-		if(!dontPushState) history.pushState(state,"",'/screenControlSelect/' + comPort)
-		switchScreen('screenControlSelect');
-	});
-	
-}
-*/
 
 
 Bluetooth.on('ready', function() {

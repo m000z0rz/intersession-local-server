@@ -305,25 +305,58 @@ var Control = (function () {
 
 
 var Controller = (function () {
-	var Controller = function(_forHostname, _forPort) {
+	//var Controller = function(_forHostname, _forPort) {
+	var Controller = function(_controllerID, _botID, _name) {
 		var self = this;
 
 		this.controls = [];
 
-		var forHostname = _forHostname;
-		var forPort = _forPort;
+		self.controllerID = _controllerID;
 
-		this.getForHostname = function() { return forHostname; };
-		this.getForPort = function() { return forPort; };
-		this.getCompiledID = function() { return (forHostname || '') + '&' + (forPort || ''); };
+		var botID = _botID;
+		var name = _name;
 
-		this.setForHostname = function(value) { forHostname = value; };
-		this.setForPort = function(value) { forPort = value; };
+
+
+		this.botID = function(value) {
+			if(value === undefined) return botID;
+			else {
+				botID = value;
+				self.save(saveCallback);
+				return self;
+			}
+		};
+
+		this.name = function(value) {
+			if(value === undefined) return name;
+			else {
+				name = value;
+				self.save(saveCallback);
+				return self;
+			}
+		};
+
+		//self.botID = _botID;
+
+
+
+		//var forHostname = _forHostname;
+		//var forPort = _forPort;
+		//var botID = _botID;
+
+		//this.getForHostname = function() { return forHostname; };
+		//this.getForPort = function() { return forPort; };
+		//this.getCompiledID = function() { return (forHostname || '') + '&' + (forPort || ''); };
+		//this.getBotID = function() { return botID; };
+
+		//this.setForBotID = function(value) { botID = value; };
+		//this.setForHostname = function(value) { forHostname = value; };
+		//this.setForPort = function(value) { forPort = value; };
 
 		var saveCallback = function(data) {
-			console.log('save callback, data ',data);
+			//console.log('save callback, data ',data);
 			if(data && data.err) console.log('save err ', data.err);
-			else console.log('save successful');
+			//else console.log('save successful');
 		};
 
 		this.addControl = function(control, suppressSave) {
@@ -350,9 +383,12 @@ var Controller = (function () {
 
 		this.toJSON = function() {
 			return {
-				forHostname: forHostname,
-				forPort: forPort,
-				compiledID: self.getCompiledID(),
+				//forHostname: forHostname,
+				//forPort: forPort,
+				botID: self.botID(),
+				name: self.name(),
+				controllerID: self.controllerID,
+				//compiledID: self.getCompiledID(),
 				controls: self.controls
 			};
 		};
@@ -361,13 +397,29 @@ var Controller = (function () {
 			var controllers = JSON.parse(localStorage.getItem('controllers')) || {};
 			var thisJSON = this.toJSON();
 
-			controllers[self.getCompiledID()] = thisJSON;
-			localStorage.setItem('controllers', JSON.stringify(controllers));
+
+			//controllers[self.getCompiledID()] = thisJSON;
+			//localStorage.setItem('controllers', JSON.stringify(controllers));
 
 			if(webSocket.socket.connected) {
 				webSocket.emit('saveController', {controller: thisJSON}, function(data) {
+					//if(data && data.newID) console.log('saved with new ID)');
 					if(callback && typeof callback === 'function') callback(data);
 				});
+			}
+		};
+
+		this.remove = function(callback) {
+			webSocket.emit('removeController', {controllerID: self.controllerID}, function(data) {
+				console.log('remove return ', data);
+				if(callback && typeof callback === 'function') callback();
+			});
+
+			if(controllerCache[self.controllerID]) controllerCache[self.controllerID] = undefined;
+			var listCache = controllerListCache[self.botID()];
+			if(listCache) {
+				var index = listCache.indexOf(self.controllerID);
+				if(index !== -1) listCache.splice(index, 1);
 			}
 		};
 
@@ -376,7 +428,7 @@ var Controller = (function () {
 	Controller.prototype = new EventEmitter();
 
 	Controller.fromJSON = function(json) {
-		var controller = new Controller(json.forHostname, json.forPort);
+		var controller = new Controller(json.controllerID, json.botID, json.name);
 
 		json.controls.forEach(function(jsonControl) {
 			//controller.controls.push(Control.fromJSON(jsonControl));
@@ -386,7 +438,17 @@ var Controller = (function () {
 		return controller;
 	};
 
-	Controller.fetch = function(forHostname, forPort, callback) {
+
+
+
+
+
+	var controllerCache = {}; // by controllerID
+	var controllerListCache = {}; // by bot ID
+
+
+	
+	Controller.fetchByHostnameAndPort = function(forHostname, forPort, callback) {
 		var controllerJSON;
 		var compiledID = forHostname + '&' + forPort;
 		var localFallback = function() {
@@ -408,6 +470,107 @@ var Controller = (function () {
 				} else {
 					if(data.controller && data.controller !== '') callback(Controller.fromJSON(data.controller));
 					else callback();
+				}
+			});
+		} else {
+			localFallback();
+		}
+	};
+	
+
+	Controller.fetchByID = function(controllerID, callback) {
+		var controllerJSON;
+
+		if(controllerCache[controllerID] !== undefined) { 
+			callback(controllerCache[controllerID]);
+			return;
+		}
+		
+		//var compiledID = forHostname + '&' + forPort;
+		var localFallback = function() {
+			console.log('no local fallback on controller.fetchByID');
+			return;
+			/*
+			var controllers = JSON.parse(localStorage.getItem('controllers'));
+			console.log('local: ', controllers);
+			controllerJSON = controllers[compiledID];
+			window.controllers = controllers;
+			console.log('compiled id ', compiledID);
+			console.log('controller JSON ', controllerJSON);
+			if(!controllerJSON || controllerJSON === '') callback();
+			else callback(Controller.fromJSON(controllerJSON));
+			*/
+		};
+
+		if(webSocket.socket.connected) {
+			console.log('websocket by ' + controllerID);
+			webSocket.emit('fetchController', { controllerID: controllerID }, function(data) {
+				if(data.err) {
+					console.log('controller fetch err ', data.err);
+					localFallback();
+				} else {
+					if(data.controller && data.controller !== '') {
+						var controller = Controller.fromJSON(data.controller);
+						controllerCache[controllerID] = controller;
+
+						//var listCacheQuery = JSON.stringify({
+						//	botID: controller.botID()
+						//});
+						var listCache = controllerListCache[controller.botID()];
+						//console.log('fetch, checking listCache ', listCache, controller, data.controller);
+						//console.log('all list caches ', controllerListCache);
+						//if(listCache) console.log('index of ', controller.botID(), listCache.indexOf(controller.controllerID));
+						if(listCache && listCache.indexOf(controller.controllerID) === -1) listCache.push(controller.controllerID);
+						
+
+						callback(controller);
+					} //callback(Controller.fromJSON(data.controller));
+					else callback();
+				}
+			});
+		} else {
+			localFallback();
+		}
+	};
+
+	Controller.getControllerList = function(botID, callback) {
+		function idListToControllers(list) {
+			// assumes controlelrs all exist in cache
+			return list.map(function(controllerID) { return controllerCache[controllerID];});
+		}
+
+		//var optionsAsString = JSON.stringify(options);
+		if(controllerListCache[botID] !== undefined) {
+			callback(idListToControllers(controllerListCache[botID]));
+			return;
+		}
+
+
+		var localFallback = function() {
+			//TODO
+			console.log("can't yet get list of controllers locally");
+			callback([]);
+		};
+
+		if(webSocket.socket.connected) {
+			webSocket.emit('fetchControllerList', {botID: botID}, function(data) {
+				if(data.err) {
+					console.log('controller list fetch err ', data.err);
+					localFallback();
+				} else {
+					var controllerList;
+
+					controllerList = data.controllerList.map(function(controllerJSON) {
+						var controller = controllerCache[controllerJSON.controllerID];
+						if(controller === undefined) {
+							controller = Controller.fromJSON(controllerJSON);
+							controllerCache[controller.controllerID] = controller;
+						}
+						return controller.controllerID;
+					});
+
+					controllerListCache[botID] = controllerList;
+					callback(idListToControllers(controllerList));
 				}
 			});
 		} else {
