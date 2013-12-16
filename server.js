@@ -21,6 +21,12 @@ var app = express();
 
 var localIP = require('my-local-ip')();
 
+var fs = require('fs');
+var path = require('path');
+
+
+var webServer = process.env['ROLLERBOTWEBSERVER'];
+
 // Websocket //////////////////////////////////////////////
 var http = require('http');
 var httpServer = http.createServer(app);
@@ -187,7 +193,10 @@ socketIO.sockets.on('connection', function(socket) {
 
     // send initial greeting with hosename
 
-    socket.emit('greeting', {hostname: os.hostname()});
+    socket.emit('greeting', {
+        hostname: os.hostname(),
+        webServer: webServer
+    });
 });
 
 
@@ -198,7 +207,34 @@ socketIO.sockets.on('connection', function(socket) {
 
 
 
+function createFullPath(filePath) {
+    filePath = path.normalize(filePath);
+    //console.log('trying to create full path for ', filePath);
+    var folderPath = path.dirname(filePath);
 
+    var currentPath = '';
+    var folders = folderPath.split(path.sep);
+
+    /*
+    function makeIfDoesntExist(currentPath) {
+        return function(exists) {
+            if(!exists) fs.mkdir(currentPath);
+        };
+    }
+    */
+
+    for(var i = 0; i < folders.length; i++) {
+        if(i !== 0) currentPath += path.sep;
+        currentPath += folders[i];
+
+        //console.log('createFullpath on current path ', currentPath);
+
+        if(!fs.existsSync(currentPath)) {
+            //makeIfDoesntExist(currentPath)
+            fs.mkdir(currentPath);
+        }
+    }
+}
 
 
 // Express ////////////////////////////////////////////////
@@ -207,21 +243,57 @@ app.use(express.bodyParser());
 app.use(express.cookieParser());
 app.use(express.session({ secret: "whaaaaatS?", store: mongoStore }));
 
-app.get('/', function (req, res) {
-    //res.redirect('/client.html');
-    res.sendfile(__dirname + '/public/client.html');
+
+function fetchCacheAndSend(req, res, next, overrideFile) {
+    var webURL = webServer + req.url;
+    http.get(webURL, function(webRes) {
+        var localPath;
+        if(overrideFile) localPath = __dirname + '/public/webcache/' + overrideFile;
+        else localPath = __dirname + '/public/webcache' + req.url;
+
+        createFullPath(localPath);
+        //console.log('localPath: ', localPath);
+        var writeStream = fs.createWriteStream(localPath, {
+            flags: 'w',
+            encoding: null,
+        });
+        //console.log('pipe ' + req.url);
+        webRes.pipe(writeStream);
+        writeStream.on('close', function() {
+            //console.log('sendfile ' + req.url);
+            res.sendfile(localPath);
+        });
+        //console.log('webRes ', webRes);
+    }).on('error', function(err) {
+        console.log('web req error ', err);
+        next();
+    });
+}
+
+app.get('/', function (req, res, next) {
+    //console.log('send /');
+    fetchCacheAndSend(req, res, next, 'client.html');
+});
+
+app.get('/screen*', function(req, res) {
+    //console.log('send screen');
+    fetchCacheAndSend(req, res, next, 'client.html');
 });
 
 app.get('/js/Bluetooth.js', function(req, res) {
     // deliver the local version of this
+    console.log('send bluetooth');
     res.sendfile(__dirname + '/public/js/Bluetooth_local.js');
 });
 
-app.get('/screen*', function(req, res) {
-    res.sendfile(__dirname + '/public/client.html');
+
+
+app.get('/*', function(req, res, next) {
+    //console.log('send * ' + req.url);
+    fetchCacheAndSend(req, res, next);
 });
 
-app.use(express.static(__dirname + '/public',  {maxAge: 1}));
+//app.use(express.static(__dirname + '/public',  {maxAge: 1}));
 
 
 
