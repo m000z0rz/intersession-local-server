@@ -9,7 +9,7 @@ var SerialPort = serialport.SerialPort;
 var mongo = require('mongoskin');
 //var mongoskinstore = require('mongoskinstore');
 var mongoskinstore = require('./mongoskinstore');
-var mongodb = mongo.db('mongodb://admin:' + process.env['ROLLERBOTPASSWORD'] + '@paulo.mongohq.com:10018/rollerbot_test?auto_reconnect');
+var mongodb = mongo.db('mongodb://admin:' + process.env['ROLLERBOTPASSWORD'] + '@paulo.mongohq.com:10018/rollerbot_test?auto_reconnect', {safe: true});
 var mongoStore = new mongoskinstore({db: mongodb});
 
 //var WebSocket = require('ws');
@@ -81,6 +81,12 @@ socketIO.sockets.on('connection', function(socket) {
 
     socket.on('subscribePort', function(data, clientCallback) {
         var portName = data.portName;
+        if(portName === undefined || portName === '') {
+            console.log('bad port name');
+            clientCallback({err: 'bad port name'});
+            return;
+        }
+
         console.log(socket.id + ' attempt to subscribe to ' + portName);
         spInfo = serialPorts[data.portName];
 
@@ -228,8 +234,15 @@ app.use(express.static(__dirname + '/public',  {maxAge: 1}));
 
 
 
-console.log("\n\n");
+var clearString = '';
+for(var i = 0; i < 40; i++) {
+    clearString += '\n';
+}
+console.log(clearString);
+
+//console.log("\n\n");
 console.log("Server is at http://" + localIP + ":" + httpServerPort);
+console.log("\n\n");
 
 
 var clientMonitor = function() {
@@ -251,4 +264,4 @@ var clientMonitor = function() {
     setTimeout(clientMonitor, 5000);
 };
 
-clientMonitor();
+//clientMonitor();

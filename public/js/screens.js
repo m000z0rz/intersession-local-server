@@ -32,14 +32,18 @@
 			//console.log(h1);
 			h1.textContent = title;
 			titleBar.appendChild(h1);
+			screen.dom.titleElement = h1;
 
 			screen.dom.div.appendChild(titleBar);
+
 		};
 
-		screen.buildTitleButton = function(id, title, onClick) {
+		screen.buildTitleButton = function(id, title, onClick, startActive) {
+			if(startActive === undefined) startActive = true;
 			var titleButton = document.createElement('span');
 			titleButton.id = id;
-			titleButton.className = 'titleIconButton';
+			if(startActive === true) titleButton.className = 'titleIconButton';
+			else titleButton.className = ' titleIconButtonDeactivated';
 			titleButton.textContent = title;
 
 			//titleButton.addEventListener('click', onClick);
@@ -47,6 +51,14 @@
 			addPointerListeners(titleButton, ['click', 'touchstart'], onClick);
 
 			screen.dom.titleBar.appendChild(titleButton);
+
+			return titleButton;
+			//window.titleButtons = window.titleButtons || [];
+			//window.titleButtons.push(titleButton);
+
+			//console.log('built button wtih id ' + id);
+			//console.log(screen.dom.titleBar);
+
 
 
 		};
@@ -95,13 +107,19 @@
 
 		historyState.screenName = toScreen;
 
+		onResize();
+
 		//onResize();
 	}
 
-	function navigateTo(screenName, options, pushState) {
+	function navigateTo(screenName, urlOptions, otherOptions, pushState) {
 		//console.log('navigateTo ', screenName);
 		var screen = screenMap[screenName];
+
 		if(pushState === undefined) pushState = true;
+
+		screen.urlOptions = urlOptions;
+		screen.otherOptions = otherOptions;
 
 		if(screen) {
 			if(currentScreen && currentScreen.definition.onNavigateFrom) {
@@ -110,13 +128,20 @@
 			}
 			if(screen.definition.onNavigateTo) {
 				//console.log('onNavigateTo for ', screen);
-				screen.definition.onNavigateTo(screen, options);
+				screen.definition.onNavigateTo(screen, urlOptions, otherOptions);
 			}
 		}
 
+
+
 		// need to encode options
 		//console.log('state ', state, ' screenName ', screenName);
-		if(pushState) history.pushState(historyState, '', '/' + screenName + '/');
+		//if(pushState) history.pushState(historyState, '', '/' + screenName + '/');
+		var url;
+		if(screen.makeURL) url = screen.makeURL(urlOptions);
+		else if(screen.definition.makeURL) url = screen.definition.makeURL(urlOptions);
+		else url = '/' + screenName + '';
+		if(pushState) history.pushState(historyState, '', url);
 		//switchScreen(screen);
 		currentScreen = screen;
 

@@ -13,7 +13,7 @@ defineScreen(function () {
 			screen.buildTitleButton(
 				'screenControl_gotoEdit', 'Edit',
 				function() {
-					screen.navigateTo('screenEdit', {comPort: historyState.comPort});
+					screen.navigateTo('screenEdit', screen.urlOptions);
 					//navigate_screenControl(state.comPort, 'replace');
 				}
 			);
@@ -21,7 +21,7 @@ defineScreen(function () {
 			screen.buildTitleButton(
 				'screenEdit_gotoTerminal', 'Terminal',
 				function() {
-					screen.navigateTo('screenTerminal', {comPort: historyState.comPort});
+					screen.navigateTo('screenTerminal', screen.urlOptions);
 				}
 			);
 
@@ -36,31 +36,42 @@ defineScreen(function () {
 
 
 		},
-		onNavigateTo: function(screen, options) {
+		makeURL: function(urlOptions) {
+			var url = '/screenControl';
+			var pieces = ['botID', 'port', 'controllerID'];
+			pieces.forEach(function(piece) {
+				url += '/' + piece + '/' + urlOptions[piece];
+			});
+
+			return url;
+		},
+		onNavigateTo: function(screen, urlOptions, otherOptions) {
 			// options: comPort
 			// state: hostname
-			if(!state.controller) {
-				console.log('controller fetch');
+			//if(!state.controller) {
+				//console.log('controller fetch');
 				//fresh, need controller
-				Controller.fetch(historyState.hostname, options.comPort, function(controller) {
+				//Controller.fetch(historyState.hostname, options.comPort, function(controller) {
+				Controller.fetchByID(urlOptions.controllerID, function(controller) {
 					if(!controller) {
-						screen.controller = new Controller(historyState.hostname, options.comPort);
+						//screen.controller = new Controller(historyState.hostname, options.comPort);
+						console.log('couldnt fetch controller');
 					} else {
 						screen.controller = controller;
 					}
 					
 					afterGetController();
 				});
-			} else {
-				console.log('controller from state');
-				// can do it directly
-				screen.controller = state.controller;
-				afterGetController();	
-			}
+			//} else {
+			//	console.log('controller from state');
+			//	// can do it directly
+			//	screen.controller = state.controller;
+			//	afterGetController();	
+			//}
 
 			function afterGetController() {
-				state.controller = screen.controller;
-				Bluetooth.openPort(options.comPort, function(data) {
+				//state.controller = screen.controller;
+				Bluetooth.openPort(urlOptions.port, function(data) {
 					theRest();
 				});
 			}
@@ -72,7 +83,7 @@ defineScreen(function () {
 				// just to be sure
 				if(screen.controlInterface) screen.controlInterface.clearEvents();
 
-				screen.controlInterface = new ControlInterface(options.comPort);
+				screen.controlInterface = new ControlInterface(urlOptions.comPort);
 
 				var controlSVG = screen.dom.svg;
 				clearSVG(controlSVG);
@@ -83,7 +94,7 @@ defineScreen(function () {
 					putControl(control);
 				});
 
-				historyState.comPort = options.comPort;
+				//historyState.comPort = options.comPort;
 				//if(dontPushState === 'replace') history.replaceState(state, '', '/screenControl/' + comPort);
 				//else if(!dontPushState) history.pushState(state,'','/screenControl/' + comPort)
 				//switchScreen('screenControl');
