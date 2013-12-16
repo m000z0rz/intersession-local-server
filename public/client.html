@@ -413,52 +413,6 @@ function handleNavigate(dontPushState) {
 	Screens.navigateTo(screenName, urlOptions, undefined, pushState);
 }
 
-function handleNavigateOld(dontPushState) {
-	//console.log('handleNavigate called');
-	if(!Bluetooth.isReady) return; // skip initial window.onpopstate until bt is ready
-	//console.log('handle navigate');
-	//if(!state) {
-	// initial navigation
-	var urlPath = window.location.pathname.split('/');
-
-	var screenName = urlPath[1];
-	var comPort = urlPath[2];
-	var pushState = !dontPushState;
-
-	//console.log('handle navigate state ', state);
-	if(screenName === undefined || screenName === '' || screenName === 'screenPortSelect') {
-		//navigate_screenPortSelect(dontPushState);
-		screenName = 'screenPortSelect';
-		options = {};
-	} else if(screenName === 'screenPortSelect') {
-		options = {};
-		//navigate_screenPortSelect(dontPushState);
-	} else if(screenName === 'screenControlSelect') {
-		options = {comPort: comPort}; 
-		//navigate_screenControlSelect(comPort, dontPushState);
-	} else if(screenName === 'screenEdit') {
-		options = {comPort: comPort};
-		//navigate_screenEdit(comPort, dontPushState);
-	} else if(screenName === 'screenControl') {
-		//navigate_screenControl(comPort, dontPushState);
-		options = {comPort: comPort};
-	} else if(screenName === 'screenEditProperties') {
-		//navigate_screenEditProperties();
-		// redirect to home page
-		//navigate_screenPortSelect('replace');
-		screenName = 'screenPortSelect';
-	} else if(screenName === 'screenTerminal') {
-		//navigate_screenTerminal(comPort, dontPushState);
-		options = {comPort: comPort};
-	}
-
-	console.log('navigating to! pushState?', pushState, ' screenName', screenName);
-	Screens.navigateTo(screenName, options, pushState);
-	//}
-}
-
-
-
 
 
 

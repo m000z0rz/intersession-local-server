@@ -14,7 +14,6 @@ defineScreen(function () {
 				'screenControl_gotoEdit', 'Edit',
 				function() {
 					screen.navigateTo('screenEdit', screen.urlOptions);
-					//navigate_screenControl(state.comPort, 'replace');
 				}
 			);
 
@@ -25,7 +24,6 @@ defineScreen(function () {
 				}
 			);
 
-			//var svg = document.createElement('svg');
 			var svg = createSVGElement('svg');
 			screen.dom.svg = svg;
 			svg.id = 'screenControl_svg';
@@ -46,58 +44,28 @@ defineScreen(function () {
 			return url;
 		},
 		onNavigateTo: function(screen, urlOptions, otherOptions) {
-			// options: comPort
-			// state: hostname
-			//if(!state.controller) {
-				//console.log('controller fetch');
-				//fresh, need controller
-				//Controller.fetch(historyState.hostname, options.comPort, function(controller) {
-				Controller.fetchByID(urlOptions.controllerID, function(controller) {
-					if(!controller) {
-						//screen.controller = new Controller(historyState.hostname, options.comPort);
-						console.log('couldnt fetch controller');
-					} else {
-						screen.controller = controller;
-					}
-					
-					afterGetController();
-				});
-			//} else {
-			//	console.log('controller from state');
-			//	// can do it directly
-			//	screen.controller = state.controller;
-			//	afterGetController();	
-			//}
-
-			function afterGetController() {
-				//state.controller = screen.controller;
+			Controller.fetchByID(urlOptions.controllerID, function(controller) {
+				if(!controller) {
+					console.log('couldnt fetch controller');
+				} else {
+					screen.controller = controller;
+				}
+				
 				Bluetooth.openPort(urlOptions.port, function(data) {
 					theRest();
 				});
-			}
+			});
 
 
 
 			function theRest() {
-				console.log('opening port');
-				// just to be sure
-				if(screen.controlInterface) screen.controlInterface.clearEvents();
-
 				screen.controlInterface = new ControlInterface(urlOptions.comPort);
 
 				var controlSVG = screen.dom.svg;
 				clearSVG(controlSVG);
-				//clearChildren(controlSVG);
 
-				screen.controller.controls.forEach(function(control) {
-					//screenControl_putControl(control);
-					putControl(control);
-				});
+				screen.controller.controls.forEach(putControl);
 
-				//historyState.comPort = options.comPort;
-				//if(dontPushState === 'replace') history.replaceState(state, '', '/screenControl/' + comPort);
-				//else if(!dontPushState) history.pushState(state,'','/screenControl/' + comPort)
-				//switchScreen('screenControl');
 			}
 
 

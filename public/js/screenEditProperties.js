@@ -1,10 +1,3 @@
-	/*
-	<div id='screenEditProperties' class='screen menu'>
-		<h1 id='screenEditProperties_header'>Properties</h1>
-		<div id='screenEditProperties_div'></div>
-	</div>
-	*/
-
 // screenPortSelect
 defineScreen(function (screen) {
 	return {
@@ -86,9 +79,6 @@ defineScreen(function (screen) {
 			});
 
 			propertiesDiv.appendChild(documentFragment);
-
-			//if(!dontPushState) history.pushState(state,"",'/screenEditProperties')
-			//switchScreen('screenEditProperties');
 		},
 		onNavigateFrom: function(screen) {
 

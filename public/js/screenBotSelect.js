@@ -52,7 +52,6 @@ defineScreen(function (screen) {
 			return url;
 		},
 		onNavigateTo: function(screen, urlOptions, otherOptions) {
-			//if(historyState.botID !== undefined) screen.dom.input.value = historyState.botID;
 			if(otherOptions && otherOptions.botID !== undefined) screen.dom.input.value = otherOptions.botID;
 		},
 		onNavigateFrom: function(screen) {

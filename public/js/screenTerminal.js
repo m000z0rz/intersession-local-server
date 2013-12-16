@@ -1,27 +1,4 @@
 // screen terminal
-
-/*
-
-	<div id='screenTerminal' class='screen full menu' style='padding: 0px;'>
-		<h1 id='screenTerminal_header'>Terminal</h1>
-		<div id='screenTerminal_terminal' class='terminal'
-				></div>
-		<div id='screenTerminal_footer'
-				style='position: absolute; bottom: 0px; height: 60px; box-sizing: border-box; width: 100%;'>
-			<input id='screenTerminal_input' type='text' style='border: 1px solid #333333; width: 80%;' /> <button id='screenTerminal_send'>Send</button>
-			<br/>
-			<label for='screenTerminal_autoscroll'>Autoscroll</label><input type='checkbox' id='screenTerminal_autoscroll' checked />
-			<span style='padding-left: 40px;'>
-			<label for='screenTerminal_lineEnding'>Send newline (\n) on each send</label>
-			<select id='screenTerminal_lineEnding'>
-				<option value='no' default>No</option>
-				<option value='yes'>Yes</option>
-			</select>
-
-		</div>
-	</div>
-*/
-
 defineScreen(function (screen) {
 	return {
 		name: 'screenTerminal',
@@ -31,9 +8,7 @@ defineScreen(function (screen) {
 			var terminal = screen.dom.terminal;
 			var footer = screen.dom.footer;
 			var terminalHeader = screen.dom.titleBar;
-			//console.log('inner height ', window.innerHeight, ' footer ', footer.offsetHeight, ' header ', terminalHeader.offsetHeight);
 			terminal.style.height = window.innerHeight - footer.offsetHeight - terminalHeader.offsetHeight - 20;
-			//console.log('terminal height')
 		},
 		buildDOM: function (screen, div) {
 			div.style.padding = '0px;';
@@ -44,7 +19,6 @@ defineScreen(function (screen) {
 				'screenTerminal_gotoEdit', 'Edit',
 				function() {
 					screen.navigateTo('screenEdit', screen.urlOptions);
-					//navigate_screenControl(historyState.comPort, 'replace');
 				}
 			);
 
@@ -71,7 +45,6 @@ defineScreen(function (screen) {
 
 
 
-			//var terminal = document.getElementById('screenTerminal_terminal');
 			var terminalSendButton = footer.querySelector('#screenTerminal_send');
 			var terminalInput = footer.querySelector('#screenTerminal_input');
 			var terminalHistory = [];
@@ -93,7 +66,7 @@ defineScreen(function (screen) {
 				console.log('terminal send ', toSend);
 
 				thisFromTerminal = true;
-				Bluetooth.sendOnPort(historyState.comPort, toSend);
+				Bluetooth.sendOnPort(screen.urlOptions.port, toSend);
 				thisFromTerminal = false;
 
 				if(terminalHistory.length > terminalHistoryMaxItems) terminalHistory = terminalHistory.slice(terminalHistory.length - terminalHistoryMaxItems, terminalHistoryMaxItems);
@@ -116,7 +89,6 @@ defineScreen(function (screen) {
 			// can't catch up arrow in keypress
 			terminalInput.addEventListener('keydown', function(e) {
 				if(e.keyCode === 38) { // up arrow
-					//console.log('history up');
 					terminalHistoryIndex -= 1;
 					if(terminalHistoryIndex < 0) terminalHistoryIndex = 0;
 					if(terminalHistory[terminalHistoryIndex]) terminalInput.value = terminalHistory[terminalHistoryIndex];
@@ -132,11 +104,10 @@ defineScreen(function (screen) {
 			var lastTerminalElement;
 			var lastTerminalSource;
 
-			//var terminal = document.getElementById('screenTerminal_terminal');
 			var targetTerminalElement;
 			var makeTerminalOnData = function(source) {
 				return function(data) {
-					if(data.portName === historyState.comPort) {
+					if(data.portName === screen.urlOptions.port) {
 						terminalAddData(source, data.serialData);
 					}
 				};
@@ -172,13 +143,6 @@ defineScreen(function (screen) {
 			Bluetooth.on('receiveOnPort', makeTerminalOnData('rx'));
 			Bluetooth.on('otherSent', makeTerminalOnData('other'));
 			Bluetooth.on('thisSent', makeTerminalOnData('this'));
-
-			/*
-			Bluetooth.on('receiveOnPort', function(data) {
-				console.log('rx ' + data.portName + ": ", data.serialData);
-			});
-			*/
-
 		},
 		makeURL: function(urlOptions) {
 			var url = '/screenTerminal';
@@ -202,22 +166,12 @@ defineScreen(function (screen) {
 			}
 
 			Bluetooth.openPort(urlOptions.port, function(data) {
-				theRest();
-			});
-
-			function theRest() {
-				//var titleBar = screen.dom.titleBar;
-				//var header = document.getElementById('screenTerminal_header');
-				//header.textContent = 'Terminal on ' + comPort;
 				screen.dom.titleElement.textContent = 'Terminal on ' + urlOptions.port;
-				//historyState.comPort = options.comPort;
-				//if(dontPushState === 'replace') history.replaceState(state, '', '/screenTerminal/' + comPort);
-				//else if(!dontPushState) history.pushState(state,'','/screenTerminal/' + comPort)
-				//switchScreen('screenTerminal');
-				//var terminalInput = document.getElementById('screenTerminal_input');
+
 				var terminalInput = screen.dom.footer.querySelector('#screenTerminal_input');
 				terminalInput.focus();
-			}
+			});
+
 		},
 		onNavigateFrom: function(screen) {
 			//if(screen.controlInterface) screen.controlInterface.clearEvents();

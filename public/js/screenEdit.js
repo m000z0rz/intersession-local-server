@@ -71,18 +71,8 @@ defineScreen(function (screen) {
 				}, false);
 				g.addEventListener('touchmove', function(e) {
 					var touch = e.touches[0];
-					//var editSVG = document.getElementById('screenEdit_svg');
 					if(screen.isDragging) {
 						var scaleFactor = getControlScale(svg);
-						/*
-						if(svg.offsetWidth > 2*svg.offsetHeight) {
-							// width is in excess; height controls scale
-							scaleFactor = 1000 / svg.offsetHeight;
-						} else {
-							// height is in excess; width controls scale
-							scaleFactor = 2000 / svg.offsetWidth;
-						}
-						*/
 						var dX = touch.clientX - screen.lastDragPosition.x;
 						var dY = touch.clientY - screen.lastDragPosition.y;
 						screen.selectedControl.translate(scaleFactor * dX, scaleFactor * dY);
@@ -96,7 +86,6 @@ defineScreen(function (screen) {
 					e.stopPropagation(); // stop it from going to svg which deselects;
 				}, false); 
 				g.addEventListener('dblclick', function(e) {
-					//navigate_screenEditProperties(control);
 					screen.navigateTo('screenEditProperties', {}, {control: control});
 				}, false);
 				g.addEventListener('mouseup', function(e) {
@@ -110,7 +99,6 @@ defineScreen(function (screen) {
 					if(thisTouchStart - lastTouchStart < 300) {
 						// double click
 						setTimeout(function() {
-							//navigate_screenEditProperties(control);
 							screen.navigateTo('screenEditProperties', {}, {control: control});
 						}, 0);
 					}
@@ -148,7 +136,6 @@ defineScreen(function (screen) {
 				'screenEdit_gotoControl', 'Control',
 				function() {
 					screen.navigateTo('screenControl', screen.urlOptions);
-					//navigate_screenControl(state.comPort, 'replace');
 				}
 			);
 
@@ -250,15 +237,6 @@ defineScreen(function (screen) {
 			svg.addEventListener('mousemove', function(e) {
 				if(screen.isDragging) {
 					var scaleFactor = getControlScale(svg);
-					/*
-					if(svg.offsetWidth > 2*svg.offsetHeight) {
-						// width is in excess; height controls scale
-						scaleFactor = 1000 / svg.offsetHeight;
-					} else {
-						// height is in excess; width controls scale
-						scaleFactor = 2000 / svg.offsetWidth;
-					}
-					*/
 					var dX = e.clientX - screen.lastDragPosition.x;
 					var dY = e.clientY - screen.lastDragPosition.y;
 					screen.selectedControl.translate(scaleFactor * dX, scaleFactor * dY);
@@ -272,11 +250,6 @@ defineScreen(function (screen) {
 				screen.clearSelection();
 			}, false);
 
-
-			//svg.xmlns = 'http://www.w3.org/2000/svg';
-			//svg.xmlns:xlink='http://www.w3.org/1999/xlink';
-			//svg.viewbox='0 0 2000 1000'
-
 		},
 		makeURL: function(urlOptions) {
 			var url = '/screenEdit';
@@ -288,52 +261,20 @@ defineScreen(function (screen) {
 			return url;
 		},
 		onNavigateTo: function(screen, urlOptions, otherOptions) {
-			// options: comPort
-			// state: hostname
+			Controller.fetchByID(urlOptions.controllerID, function(controller) {
+				screen.controller = controller;
 
-			//if(!state.controller) {
-				//fresh, need controller
-				//Controller.fetch(historyState.hostname, options.comPort, function(controller) {
-				//historyState.controllerID = urlOptions.controllerID;
-				console.log('fetch by id ' + urlOptions.controllerID);
-				Controller.fetchByID(urlOptions.controllerID, function(controller) {
-					if(!controller) {
-						console.log('couldn\'t fetch controller');
-						//screen.controller = new Controller(historyState.hostname, options.comPort);
-					} else {
-						screen.controller = controller;
-					}
-
-					theRest();
-				});
-			//} else {
-			//	// can do it directly
-			//	screen.controller = state.controller;
-			//	theRest();	
-			//}
-
-			shortcut.add('Delete', screen.deleteControl);
-
-			function theRest() {
-				//state.controller = screen.controller;
 				screen.clearSelection();
-				//var editSVG = document.getElementById('screenEdit_svg');
 				var editSVG = screen.dom.svg;
 				var controllerName = screen.controller.name();
 				if(controllerName) screen.setNameWithoutSave(screen.controller.name());
 				else screen.setNameWithoutSave('');
-				//clearChildren(editSVG);
+				
 				clearSVG(editSVG);
-				screen.controller.controls.forEach(function(control) {
-					screen.putControl(control);
-				});
+				screen.controller.controls.forEach(screen.putControl);
+			});
 
-
-				//historyState.comPort = options.comPort;
-				//if(dontPushState === 'replace') history.replaceState(state, '', '/screenEdit/' + comPort);
-				//else if(!dontPushState) history.pushState(state,'','/screenEdit/' + comPort);
-				//switchScreen('screenEdit');
-			}
+			shortcut.add('Delete', screen.deleteControl);
 
 
 

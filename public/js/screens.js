@@ -1,7 +1,4 @@
 (function (toDiv)  {
-	//screenDefinitions = [];
-	//screenDefinitionMap = {};
-
 	screens = [];
 	screenMap = {};
 
@@ -11,8 +8,6 @@
 
 	function defineScreen(func) {
 		screenDef = func();
-		//screenDefinitions.push(screenDef);
-		//screenDefinitionMap[screenDef.name] = screenDef;
 
 		var screen = {};
 		screen.definition = screenDef;
@@ -28,8 +23,7 @@
 
 			var h1 = document.createElement('h1');
 			h1.style.display = 'inline';
-			//console.log('h1 style? ' + h1.style);
-			//console.log(h1);
+
 			h1.textContent = title;
 			titleBar.appendChild(h1);
 			screen.dom.titleElement = h1;
@@ -46,21 +40,11 @@
 			else titleButton.className = ' titleIconButtonDeactivated';
 			titleButton.textContent = title;
 
-			//titleButton.addEventListener('click', onClick);
-			//titleButton.addEventListener('touchstart', onClick);
 			addPointerListeners(titleButton, ['click', 'touchstart'], onClick);
 
 			screen.dom.titleBar.appendChild(titleButton);
 
 			return titleButton;
-			//window.titleButtons = window.titleButtons || [];
-			//window.titleButtons.push(titleButton);
-
-			//console.log('built button wtih id ' + id);
-			//console.log(screen.dom.titleBar);
-
-
-
 		};
 
 		screen.navigateTo = navigateTo;
@@ -87,18 +71,14 @@
 
 	function switchScreen(toScreen) {
 		var domScreen;
-		//console.log('switch to ' + toScreen);
 		screens.forEach(function(screen) {
-			//console.log('test "', screen.name, '"?="', toScreen, '"');
 			if(screen.name !== toScreen)  {
-				//console.log('hiding ' + screen.name);
 				domScreen = screen.dom.div;
 				if(domScreen) {
 					domScreen.style.opacity = 0;
 					domScreen.style.display = 'none';
 				}
 			} else {
-				//console.log('showing ' + screen.name);
 				domScreen = screen.dom.div;
 				domScreen.style.opacity = 1;
 				domScreen.style.display = 'block';
@@ -108,12 +88,9 @@
 		historyState.screenName = toScreen;
 
 		onResize();
-
-		//onResize();
 	}
 
 	function navigateTo(screenName, urlOptions, otherOptions, pushState) {
-		//console.log('navigateTo ', screenName);
 		var screen = screenMap[screenName];
 
 		if(pushState === undefined) pushState = true;
@@ -123,42 +100,28 @@
 
 		if(screen) {
 			if(currentScreen && currentScreen.definition.onNavigateFrom) {
-				//console.log('onNavigateFrom for ', currentScreen);
 				currentScreen.definition.onNavigateFrom(currentScreen);
 			}
 			if(screen.definition.onNavigateTo) {
-				//console.log('onNavigateTo for ', screen);
 				screen.definition.onNavigateTo(screen, urlOptions, otherOptions);
 			}
 		}
 
 
-
-		// need to encode options
-		//console.log('state ', state, ' screenName ', screenName);
-		//if(pushState) history.pushState(historyState, '', '/' + screenName + '/');
 		var url;
 		if(screen.makeURL) url = screen.makeURL(urlOptions);
 		else if(screen.definition.makeURL) url = screen.definition.makeURL(urlOptions);
 		else url = '/' + screenName + '';
 		if(pushState) history.pushState(historyState, '', url);
-		//switchScreen(screen);
 		currentScreen = screen;
 
-		//if(dontPushState === 'replace') history.replaceState(state, '', '/screenEdit/' + comPort);
-		//else if(!dontPushState) history.pushState(state,'','/screenEdit/' + comPort)
-		//console.log('will call switchScreen');
 		switchScreen(screenName);
-		//console.log('on switchScreen');
 	}
 	Screens.navigateTo = navigateTo;
 
 	function onResize() {
-		//console.log('onResize called');
 		screens.forEach(function(screen) {
-			//console.log('resize ' + screen.name + '?');
 			if(screen.definition.onResize) {
-				//console.log('  resize!');
 				screen.definition.onResize(screen);
 			}
 		});
@@ -168,8 +131,6 @@
 
 
 	window.onresize = onResize;
-	//console.log('set onResize to ', onResize);
-	//console.log(window.onresize);
 
 	window.defineScreen = defineScreen;
 

@@ -6,8 +6,6 @@ defineScreen(function (screen) {
 		onResize: function(screen) {
 		},
 		buildDOM: function (screen, div) {
-			//var header = document.createElement('div');
-			//header.id = 'screenControlSelect_header';
 			screen.buildTitleBar('Controller Select');
 
 			screen.dom.portButton = screen.buildTitleButton('', 'Port', function() {
@@ -33,13 +31,10 @@ defineScreen(function (screen) {
 			addNewControl.appendChild(h2);
 			addNewControl.className = 'button';
 			div.appendChild(addNewControl);
-			//console.log('add listener');
 			addPointerListeners(addNewControl, ['click', 'touchstart'], function(e) {
 				console.log('new controller button listener');
-				//alert('new controller');
 				if(webSocket.socket.connected) {
 					webSocket.emit('newController', {}, function(data) {
-						// data has .controllerID for new one
 						console.log('new controller');
 						var newController = new Controller(data.controllerID, screen.urlOptions.botID);
 						newController.save(function() {
@@ -50,7 +45,6 @@ defineScreen(function (screen) {
 								controllerID: newController.controllerID
 							});
 						});
-						//screen.navigateTo('screenControl', {});
 					});
 				} else {
 					console.log('else something');
@@ -104,12 +98,10 @@ defineScreen(function (screen) {
 
 			if(webSocket.socket.connected) {
 				screen.dom.botButton.textContent = 'Bot: ';
-				//if(state.botInfo) screen.dom.botButton.textContent += botInfo.botID + '-' + botInfo.name;
 				
 				webSocket.emit('getBotInfo', {botID: urlOptions.botID}, function(data) {
 					var botInfo = data.botInfo;
 					state.botInfo = botInfo;
-					//screen.dom.botButton.textContent = 'Bot: ' + botInfo.botID + '-' + botInfo.name;
 					screen.dom.botButton.textContent = 'Bot: ' + botInfo.botID;
 				});
 			} else {
@@ -142,7 +134,6 @@ defineScreen(function (screen) {
 				var imgDelete = document.createElement('img');
 				imgDelete.src = '/icons/delete.png';
 				imgDelete.style.float = 'right';
-				//imgDelete.style.display = 'none';
 				li.appendChild(imgDelete);
 
 				var imgEdit = document.createElement('img');
@@ -154,8 +145,6 @@ defineScreen(function (screen) {
 
 
 				addPointerListeners(li, ['click', 'touchstart'], function(e) {
-					//console.log('li click');
-					//historyState.
 					if(screen.urlOptions.port === undefined || screen.urlOptions.port === '') {
 						alert('No serial port selected');
 					} else {
@@ -175,7 +164,6 @@ defineScreen(function (screen) {
 						controllerID: controller.controllerID
 					});
 					e.stopPropagation();
-					//return false;
 				});
 
 				addPointerListeners(imgDelete, ['click', 'touchstart'], function(e) {
