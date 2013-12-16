@@ -22,8 +22,8 @@ var app = express();
 var localIP = require('my-local-ip')();
 
 // Websocket //////////////////////////////////////////////
-
-var httpServer = require('http').createServer(app);
+var http = require('http');
+var httpServer = http.createServer(app);
 
 var socketIO = require('socket.io').listen(httpServer);
 
@@ -185,6 +185,16 @@ socketIO.sockets.on('connection', function(socket) {
 });
 
 
+
+
+
+
+
+
+
+
+
+
 // Express ////////////////////////////////////////////////
 
 app.use(express.bodyParser());
@@ -193,7 +203,12 @@ app.use(express.session({ secret: "whaaaaatS?", store: mongoStore }));
 
 app.get('/', function (req, res) {
     //res.redirect('/client.html');
-    res.sendfile(__dirname + "/public/client.html");
+    res.sendfile(__dirname + '/public/client.html');
+});
+
+app.get('/js/Bluetooth.js', function(req, res) {
+    // deliver the local version of this
+    res.sendfile(__dirname + '/public/js/Bluetooth_local.js');
 });
 
 app.get('/screen*', function(req, res) {
@@ -201,18 +216,17 @@ app.get('/screen*', function(req, res) {
 });
 
 app.use(express.static(__dirname + '/public',  {maxAge: 1}));
-/*
-app.get('/*', function(req, res) {
-    res.sendfile(__dirname + '/public/client.html');
-});
-*/
 
 
-//app.listen(httpServerPort);
-//httpServer.listen(httpServerPort);
 
-//console.log("HTTP listening on port " + httpServerPort);
-//console.log("Websocket server on port " + webSocketServerPort);
+
+
+
+
+
+
+
+
 
 console.log("\n\n");
 console.log("Server is at http://" + localIP + ":" + httpServerPort);
