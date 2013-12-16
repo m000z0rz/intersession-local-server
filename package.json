@@ -8,7 +8,8 @@
     "mongoskin": "~0.6.0",
     "my-local-ip": "~1.0.0",
     "serialport": "~1.2.4",
-    "socket.io": "~0.9.16"
+    "socket.io": "~0.9.16",
+    "socket.io-client": "~0.9.16"
   },
   "devDependencies": {},
   "scripts": {

@@ -1,4 +1,3 @@
-//var webSocketServerPort = 8088;
 var httpServerPort = 8080;
 
 var os = require('os');
@@ -7,16 +6,13 @@ var serialport = require("serialport");
 var SerialPort = serialport.SerialPort;
 
 var mongo = require('mongoskin');
-//var mongoskinstore = require('mongoskinstore');
 var mongoskinstore = require('./mongoskinstore');
 var mongodb = mongo.db('mongodb://admin:' + process.env['ROLLERBOTPASSWORD'] + '@paulo.mongohq.com:10018/rollerbot_test?auto_reconnect', {safe: true});
 var mongoStore = new mongoskinstore({db: mongodb});
 
-//var WebSocket = require('ws');
-//var WebSocketServer = WebSocket.Server;
-
 var express = require('express');
 var app = express();
+var http = require('http');
 
 
 var localIP = require('my-local-ip')();
@@ -25,13 +21,76 @@ var fs = require('fs');
 var path = require('path');
 
 
+
+
+
+
 var webServer = process.env['ROLLERBOTWEBSERVER'];
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Websocket //////////////////////////////////////////////
-var http = require('http');
 var httpServer = http.createServer(app);
 
 var socketIO = require('socket.io').listen(httpServer);
+
+var webSocket = require('socket.io-client').connect(webServer);
+
+webSocket.on('connect', function() {
+    console.log('connected to web server');
+
+    webSocket.on('listPorts', function(data, clientCallback) {
+
+    });
+
+    webSocket.emit('registerLocalServer', {hostname: os.hostname()});
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 httpServer.listen(httpServerPort);
 
@@ -207,6 +266,24 @@ socketIO.sockets.on('connection', function(socket) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Express ////////////////////////////////////////////////
+
 function createFullPath(filePath) {
     filePath = path.normalize(filePath);
     //console.log('trying to create full path for ', filePath);
@@ -237,7 +314,7 @@ function createFullPath(filePath) {
 }
 
 
-// Express ////////////////////////////////////////////////
+
 
 app.use(express.bodyParser());
 app.use(express.cookieParser());
@@ -294,6 +371,14 @@ app.get('/*', function(req, res, next) {
 });
 
 //app.use(express.static(__dirname + '/public',  {maxAge: 1}));
+
+
+
+
+
+
+
+
 
 
 

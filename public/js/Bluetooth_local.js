@@ -1,3 +1,21 @@
+var localSocket = io.connect(window.location.origin);
+var webSocket;
+
+localSocket.on('greeting', function(data) {
+	console.log('on greeting, ', data);
+
+	webSocket = io.connect(data.webServer);
+
+	webSocket.on('connect', function(data) {
+		console.log('websocket connect');
+		Bluetooth.ready();
+	});
+});
+
+
+
+
+
 var Bluetooth = (function() {
 	// defined dynamically based on whether we're communicating with Bluetooth via a web interface or android
 	var Bluetooth = new EventEmitter();
@@ -5,37 +23,52 @@ var Bluetooth = (function() {
 
 
 	Bluetooth.isReady = false;
-	var socket = io.connect(window.location.origin);
+	//var socket = io.connect(window.location.origin);
 
-	socket.on('connect', function () {
+	localSocket.on('connect', function () {
 		//console.log('bt socket opened');
 	});
 
-	socket.on('greeting', function(data) {
+	Bluetooth.ready = function() {
+		Bluetooth.isReady = true;
+		Bluetooth.emit('ready');
+	};
+
+	/*
+	localSocket.on('greeting', function(data) {
 		//console.log('greeting received from ' + data.hostname);
 		state.hostname = data.hostname;
 		Bluetooth.isReady = true;
 		Bluetooth.emit('ready');
 	});
+*/
 
-	socket.on('disconnect', function() {
+	localSocket.on('disconnect', function() {
 		//console.log('socket disconnected');
 	});
 
-	socket.on('error', function(err) {
+	localSocket.on('error', function(err) {
 		console.log('socket error', err);
 	});
 
-	socket.on('receiveOnPort', function(data) {
+	localSocket.on('receiveOnPort', function(data) {
 		Bluetooth.emit('receiveOnPort', [data]);
 	});
 
-	socket.on('otherSent', function(data) {
+	localSocket.on('otherSent', function(data) {
 		Bluetooth.emit('otherSent', [data]);
 	});
 
+	localSocket.on('portError', function(data) {
+		console.log('portError: ', data);
+	});
+
+	localSocket.on('portClosed', function(data) {
+		console.log('portClosed: ', data);
+	});
+
 	Bluetooth.listPorts = function(callback) {
-		socket.emit('listPorts', {}, function(data) {
+		localSocket.emit('listPorts', {}, function(data) {
 			//console.log('listPorts callback');
 			if(data.err) console.log('listPorts callback err ', err);
 			else callback(data);
@@ -43,7 +76,7 @@ var Bluetooth = (function() {
 	};
 
 	Bluetooth.openPort = function(portName, callback) {
-		socket.emit('subscribePort', {portName: portName}, function(data) {
+		localSocket.emit('subscribePort', {portName: portName}, function(data) {
 			if(callback && typeof callback === 'function') {
 				if(data && data.err) callback(data.err);
 				else callback();
@@ -52,13 +85,13 @@ var Bluetooth = (function() {
 	};
 
 	Bluetooth.closePort = function(portName, callback) {
-		socket.emit('unsubscribePort', {portName: portName}, function(data) {
+		localSocket.emit('unsubscribePort', {portName: portName}, function(data) {
 			if(callback && typeof callback === 'function') callback();
 		});
 	};
 
 	Bluetooth.sendOnPort = function(portName, data, callback) {
-		socket.emit('sendOnPort', {portName: portName, serialData: data}, function(data) {
+		localSocket.emit('sendOnPort', {portName: portName, serialData: data}, function(data) {
 			if(callback && typeof callback === 'function') {
 				if(data && data.err) callback(data.err);
 				else callback();
