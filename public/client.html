@@ -168,6 +168,7 @@
 	</div>
 	-->
 
+	<!--
 	<div id="screenControlSelect" class="screen menu">
 		<div id="controlSelect">
 			<h1 id="screenControlSelect_COM"></h1>
@@ -180,6 +181,7 @@
 			<li class="even"><h2>Bot ID <input type="text" value="01"></input></h2></li>
 		</ul>
 	</div>
+-->
 
 
 	<!--
@@ -258,7 +260,7 @@
 
 
 <script type='text/javascript' src='/js/screens.js'></script>
-
+<script type='text/javascript' src='/js/screenControlSelect.js'></script>
 <script type='text/javascript' src='/js/screenPortSelect.js'></script>
 <script type='text/javascript' src='/js/screenTerminal.js'></script>
 <script type='text/javascript' src='/js/screenControl.js'></script>
@@ -407,6 +409,7 @@ webSocket.on('connect', function() {
 
 
 var state = {};
+var historyState = {};
 
 
 /*
@@ -623,8 +626,8 @@ function unescapeForSerial(string) {
 window.onpopstate = function(e) {
 	//console.log('pop state ', window.location.pathname, e.state);
 	handleNavigate(true);
-	if(e.state) state = e.state;
-	else state = {};
+	if(e.state) historyState = e.state;
+	else historyState = {};
 };
 
 function handleNavigate(dontPushState) {
@@ -648,7 +651,7 @@ function handleNavigate(dontPushState) {
 			options = {};
 			//navigate_screenPortSelect(dontPushState);
 		} else if(screenName === 'screenControlSelect') {
-			options = {comPort: comPort};
+			options = {comPort: comPort}; 
 			//navigate_screenControlSelect(comPort, dontPushState);
 		} else if(screenName === 'screenEdit') {
 			options = {comPort: comPort};
@@ -727,7 +730,8 @@ Bluetooth.on('ready', function() {
 
 	handleNavigate();
 
-	window.setTimeout(onResize, 1000);
+	//window.setTimeout(onResize, 1000);
+	window.setTimeout(Screens.onResize, 1000);
 });
 
 

@@ -27,7 +27,7 @@ defineScreen(function (screen) {
 			div.appendChild(propertiesDiv);
 		},
 		onNavigateTo: function(screen, options) {
-			if(!state || !state.comPort) {
+			if(!historyState || !historyState.comPort) {
 				// looks like we're coming here fresh, not from an edit screen, maybe a
 				// pasted url
 				// redirect

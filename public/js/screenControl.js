@@ -13,7 +13,7 @@ defineScreen(function () {
 			screen.buildTitleButton(
 				'screenControl_gotoEdit', 'Edit',
 				function() {
-					screen.navigateTo('screenEdit');
+					screen.navigateTo('screenEdit', {comPort: historyState.comPort});
 					//navigate_screenControl(state.comPort, 'replace');
 				}
 			);
@@ -21,27 +21,30 @@ defineScreen(function () {
 			screen.buildTitleButton(
 				'screenEdit_gotoTerminal', 'Terminal',
 				function() {
-					screen.navigateTo('screenTerminal');
+					screen.navigateTo('screenTerminal', {comPort: historyState.comPort});
 				}
 			);
 
 			//var svg = document.createElement('svg');
 			var svg = createSVGElement('svg');
 			screen.dom.svg = svg;
-			svg.id = 'screenEdit_svg';
+			svg.id = 'screenControl_svg';
 			//svgAttr(svg, 'xmlns', 'http://www.w3.org/2000/svg');
 			//svgAttr(svg, 'xmlns:xlink', 'http://www.w3.org/1999/xlink');
-			svgAttr(svg, 'viewbox', '0 0 2000 1000');
+			svgAttr(svg, 'viewBox', '0 0 2000 1000');
 			div.appendChild(svg);
 
 
 		},
 		onNavigateTo: function(screen, options) {
-			if(!state.screenName) {
+			// options: comPort
+			// state: hostname
+			if(!state.controller) {
+				console.log('controller fetch');
 				//fresh, need controller
-				Controller.fetch(state.hostname, options.comPort, function(controller) {
+				Controller.fetch(historyState.hostname, options.comPort, function(controller) {
 					if(!controller) {
-						screen.controller = new Controller(state.hostname, options.comPort);
+						screen.controller = new Controller(historyState.hostname, options.comPort);
 					} else {
 						screen.controller = controller;
 					}
@@ -49,12 +52,14 @@ defineScreen(function () {
 					afterGetController();
 				});
 			} else {
+				console.log('controller from state');
 				// can do it directly
-				afterGetController();
-				
+				screen.controller = state.controller;
+				afterGetController();	
 			}
 
 			function afterGetController() {
+				state.controller = screen.controller;
 				Bluetooth.openPort(options.comPort, function(data) {
 					theRest();
 				});
@@ -63,6 +68,7 @@ defineScreen(function () {
 
 
 			function theRest() {
+				console.log('opening port');
 				// just to be sure
 				if(screen.controlInterface) screen.controlInterface.clearEvents();
 
@@ -73,10 +79,11 @@ defineScreen(function () {
 				//clearChildren(controlSVG);
 
 				screen.controller.controls.forEach(function(control) {
-					screenControl_putControl(control);
+					//screenControl_putControl(control);
+					putControl(control);
 				});
 
-				state.comPort = options.comPort;
+				historyState.comPort = options.comPort;
 				//if(dontPushState === 'replace') history.replaceState(state, '', '/screenControl/' + comPort);
 				//else if(!dontPushState) history.pushState(state,'','/screenControl/' + comPort)
 				//switchScreen('screenControl');
