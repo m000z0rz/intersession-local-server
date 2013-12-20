@@ -59,10 +59,13 @@ var httpServer = http.createServer(app);
 
 var socketIO = require('socket.io').listen(httpServer);
 
+//if(webServer.indexOf(':') === -1) webServer += ':80';
+//webServer += ':80'
+console.log('  connecting to ' + webServer + '...');
 var webSocket = require('socket.io-client').connect(webServer);
 
 webSocket.on('connect', function() {
-    console.log('connected to web server');
+    console.log('connected to web server at ' + webServer);
 
     giveSocketBluetoothEvents(webSocket);
 
@@ -75,6 +78,8 @@ webSocket.on('connect', function() {
 
 
 function giveSocketBluetoothEvents(btSocket) {
+    btSocket.removeAllListeners();
+
     btSocket.on('disconnect', function() {
         console.log('disconnect ', btSocket.id);
 
@@ -305,28 +310,16 @@ socketIO.sockets.on('connection', function(socket) {
 
 function createFullPath(filePath) {
     filePath = path.normalize(filePath);
-    //console.log('trying to create full path for ', filePath);
     var folderPath = path.dirname(filePath);
 
     var currentPath = '';
     var folders = folderPath.split(path.sep);
 
-    /*
-    function makeIfDoesntExist(currentPath) {
-        return function(exists) {
-            if(!exists) fs.mkdir(currentPath);
-        };
-    }
-    */
-
     for(var i = 0; i < folders.length; i++) {
         if(i !== 0) currentPath += path.sep;
         currentPath += folders[i];
 
-        //console.log('createFullpath on current path ', currentPath);
-
         if(!fs.existsSync(currentPath)) {
-            //makeIfDoesntExist(currentPath)
             fs.mkdir(currentPath);
         }
     }
@@ -345,6 +338,7 @@ function fetchCacheAndSend(req, res, next, overrideFile) {
     var webURL;
     if(overrideFile) webURL = webServer + '/' + overrideFile;
     else webURL = webServer + req.url;
+    console.log('fetch from \'' + webURL + '\'');
     http.get(webURL, function(webRes) {
         var localPath;
         if(overrideFile) localPath = __dirname + '/public/webcache/' + overrideFile;

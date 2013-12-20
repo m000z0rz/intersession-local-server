@@ -1,1 +1,1 @@
-SETX ROLLERBOTWEBSERVER http://intersession-web-server.jit.su
+SETX ROLLERBOTWEBSERVER http://intersession-web-server.jit.su:80

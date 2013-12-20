@@ -4,7 +4,15 @@ var webSocket;
 localSocket.on('greeting', function(data) {
 	console.log('on greeting, ', data);
 
-	webSocket = io.connect(data.webServer);
+	var webServer = data.webServer;
+
+	//if(webServer.indexOf(':') === -1) webServer = webServer + ':80'; // specify port 80 if it isn't specified by server
+	//webServer = webServer + ':80';
+
+	console.log('connect to ', webServer);
+
+	webSocket = io.connect(webServer);
+
 
 	webSocket.on('connect', function(data) {
 		console.log('websocket connect');
