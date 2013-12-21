@@ -6,9 +6,6 @@ localSocket.on('greeting', function(data) {
 
 	var webServer = data.webServer;
 
-	//if(webServer.indexOf(':') === -1) webServer = webServer + ':80'; // specify port 80 if it isn't specified by server
-	//webServer = webServer + ':80';
-
 	console.log('connect to ', webServer);
 
 	webSocket = io.connect(webServer);
@@ -109,6 +106,24 @@ var Bluetooth = (function() {
 			portName: portName,
 			serialData: data
 		}]);
+	};
+
+	Bluetooth.sendOnDisconnect = function(portName, data, callback) {
+		localSocket.emit('sendOnDisconnect', {portName: portName, serialData: data}, function(data) {
+			if(callback && typeof callback === 'function') {
+				if(data && data.err) callback(data.err);
+				else callback();
+			}
+		});
+	};
+
+	Bluetooth.flushOnDisconnect = function(callback) {
+		localSocket.emit('flushOnDisconnect', {}, function(data) {
+			if(callback && typeof callback === 'function') {
+				if(data && data.err) callback(data.err);
+				else callback();
+			}
+		});
 	};
 
 	return Bluetooth;
