@@ -81,7 +81,6 @@ var socketIO = require('socket.io').listen(httpServer);
 
 //if(webServer.indexOf(':') === -1) webServer += ':80';
 //webServer += ':80'
-console.log('  connecting to ' + webServer + '...');
 var webSocket = require('socket.io-client').connect(webServer);
 
 webSocket.on('connect', function() {
@@ -499,8 +498,14 @@ app.get('/', function (req, res, next) {
 
 app.get('/screen*', function(req, res, next) {
     console.log('send screen');
-    console.req(req.path);
+    //console.log(req.path);
     fetchCacheAndSend(req, res, next, 'client.html');
+});
+
+app.get('/bot/*', function(req, res, next) {
+    console.log('send bot queue page');
+    fetchCacheAndSend(req, res, next, 'client.html');
+    //res.sendfile(__dirname + '/public/client.html');
 });
 
 app.get('/js/Bluetooth.js', function(req, res) {
@@ -544,7 +549,8 @@ for(var i = 0; i < 40; i++) {
 console.log(clearString);
 
 //console.log("\n\n");
-console.log("Server is at http://" + localIP + ":" + httpServerPort);
+console.log("This server is at http://" + localIP + ":" + httpServerPort);
+console.log('  Connecting to web server at ' + webServer + '...');
 console.log("\n\n");
 
 
