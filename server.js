@@ -5,10 +5,11 @@ var os = require('os');
 var serialport = require("serialport");
 var SerialPort = serialport.SerialPort;
 
-var mongo = require('mongoskin');
-var mongoskinstore = require('./mongoskinstore');
-var mongodb = mongo.db('mongodb://admin:' + process.env['ROLLERBOTPASSWORD'] + '@paulo.mongohq.com:10018/rollerbot_test?auto_reconnect', {safe: true});
-var mongoStore = new mongoskinstore({db: mongodb});
+
+//var mongo = require('mongoskin');
+//var mongoskinstore = require('./mongoskinstore');
+//var mongodb = mongo.db('mongodb://admin:' + process.env['ROLLERBOTPASSWORD'] + '@paulo.mongohq.com:10018/rollerbot_test?auto_reconnect', {safe: true});
+//var mongoStore = new mongoskinstore({db: mongodb});
 
 var express = require('express');
 var app = express();
@@ -28,7 +29,7 @@ defaultBaudRate = +defaultBaudRate;
 
 
 
-var webServer = process.env['ROLLERBOTWEBSERVER'];
+var webServer = process.env['ROLLERBOTWEBSERVER'] || 'http://intersession-web-server.jit.su:80';
 
 
 
@@ -79,12 +80,11 @@ var httpServer = http.createServer(app);
 
 var socketIO = require('socket.io').listen(httpServer);
 
-//if(webServer.indexOf(':') === -1) webServer += ':80';
-//webServer += ':80'
 var webSocket = require('socket.io-client').connect(webServer);
 
-webSocket.on('connect', function() {
-    console.log('connected to web server at ' + webServer);
+webSocket.on('connect', function () {
+    console.log('  Connected to web server at ' + webServer);
+    console.log('\n\n');
 
     giveSocketBluetoothEvents(webSocket);
 
@@ -100,7 +100,8 @@ function giveSocketBluetoothEvents(btSocket) {
     btSocket.removeAllListeners();
 
     btSocket.on('disconnect', function() {
-        console.log('disconnect ', btSocket.id);
+
+        console.log('Disconnect btSocket.id: ', btSocket.id, ', :');
 
         var filterToSocket = function(client) { return client.socket.id === btSocket.id; };
         var filterOutSocket = function(client) { return client.socket.id !== btSocket.id; };
@@ -128,11 +129,12 @@ function giveSocketBluetoothEvents(btSocket) {
                 
 
                 if(spInfo.clients.length === 0 && spInfo.isOpen === true) {
-                    console.log('closing ' + spName + ' from disconnect');
+
+                    console.log('  Closing ' + spName + ' from disconnect');
                     spInfo.serialPort.close();
                     spInfo.isOpen = false;
                 } else {
-                    console.log('after disconnect, ' + spName + ' - ' + spInfo.clients.length + ' clients left');
+                    if(spInfo.clients.length > 0)  console.log('  After disconnect, ' + spName + ' has ' + spInfo.clients.length + ' clients left');
                 }
             }
         }
@@ -140,16 +142,15 @@ function giveSocketBluetoothEvents(btSocket) {
 
 
     btSocket.on('unsubscribePort', function(data, clientCallback) {
-        console.log('unsubscribePort', data);
+        console.log('unsubscribePort btSocket.id: ', btSocket.id, ', port: ', data.portName, ': ');
         spInfo = serialPorts[data.portName];
         if(!spInfo) {
             console.log('  unknown port');
             if(clientCallback) clientCallback({err: 'Port \'' + data.portName + '\' unknown'});
         } else {
-            console.log('  filter');
             spInfo.clients = spInfo.clients.filter(function(client) { return client.socket.id !== btSocket.id; });
             if(spInfo.clients.length === 0) {
-                console.log('  length is zero; close if open');
+                console.log('  length is zero; close if open: ', spInfo.isOpen);
                 if(spInfo.isOpen === true) spInfo.serialPort.close();
                 spInfo.isOpen = false;
             }
@@ -158,19 +159,19 @@ function giveSocketBluetoothEvents(btSocket) {
     });
 
     btSocket.on('listPorts', function(data, clientCallback) {
-        console.log('on listPorts');
+        //console.log('on listPorts');
         serialport.list(function (err, ports) {
             if(err) {
-                console.log('serial port list error: ',err);
+                //console.log('serial port list error: ',err);
                 clientCallback({err: err});
             } else {
                 ports.sort(function(a, b) {
                     return +(a.comName.replace('COM',''))>+(b.comName.replace('COM',''));
                 });
-                console.log(' client callback');
-                console.log(' hostname: ' + os.hostname());
-                console.log('ports ', ports);
-                console.log('ports.map ', ports.map);
+                //console.log(' client callback');
+                //console.log(' hostname: ' + os.hostname());
+                //console.log('ports ', ports);
+                //console.log('ports.map ', ports.map);
                 clientCallback({
                     ports: ports.map(function(port) {
                         var isOpen = serialPorts[port.comName] && (serialPorts[port.comName].isOpen === true);
@@ -185,21 +186,26 @@ function giveSocketBluetoothEvents(btSocket) {
     btSocket.on('subscribePort', function(data, clientCallback) {
         var portName = data.portName;
         if(portName === undefined || portName === '') {
-            console.log('bad port name');
+            console.log('subscribePort: bad port name');
             clientCallback({err: 'bad port name'});
             return;
         }
 
-        console.log(btSocket.id + ' attempt to subscribe to ' + portName);
+        console.log('subscribePort, btSocket.id: ', btSocket.id, ', portName: ', portName);
         spInfo = serialPorts[data.portName];
 
         var subscribe_AfterOpen = function() {
-            console.log('subscribe_AfterOpen');
+            console.log('  subscribe_AfterOpen');
             spInfo.isOpen = true;
-            if(spInfo.clients.filter(function(client) { return client.socket.id === btSocket.id; }).length === 0)
+            if(spInfo.clients.filter(function(client) { return client.socket.id === btSocket.id; }).length === 0) {
+                console.log('    adding to clients list');
                 spInfo.clients.push({socket: btSocket});
+            } else {
+                console.log('    ...already on clients list?');
+            }
             var serialPort = spInfo.serialPort;
             serialPort.on('close', function() {
+                console.log('serialPort on close, portName: ', portName);
                 //console.log('sp on close, ', portName);
                 spInfo.isOpen = false;
                 spInfo.clients.forEach(function(client) {
@@ -208,15 +214,15 @@ function giveSocketBluetoothEvents(btSocket) {
             });
 
             serialPort.on('error', function(err) {
-                console.log('sp on error, ', portName, err);
+                console.log('serialPort on error, portName: "' + portName + '", err: "' + err + '"');
                 spInfo.clients.forEach(function(client) {
                     client.socket.emit('portError', {portName: data.portName, err: err});
                 });
             });
 
-            console.log('--- on data');
+            //console.log('--- on data');
             serialPort.on('data', function(serialData) {
-                console.log('sp on data, ', portName, ', ', serialData.toString());
+                console.log('sp ', portName, ' data "', serialData.toString(), '"');
                 spInfo.clients.forEach(function(client) {
                     //console.log('  send sp data to client');
                     client.socket.emit('receiveOnPort', {portName: portName, serialData: serialData.toString()});
@@ -227,23 +233,29 @@ function giveSocketBluetoothEvents(btSocket) {
         };
 
         if(!spInfo) {
+            console.log('  doesn\'t exist, creating');
             spInfo = {};
             serialPorts[data.portName] = spInfo;
             spInfo.isOpen = false;
             spInfo.clients = [];
-            console.log('Opening "' + data.portName + '"');
+            console.log('  Opening "' + data.portName + '"');
             spInfo.serialPort = new SerialPort(data.portName, {baudrate: defaultBaudRate, openImmediately: false});
 
             spInfo.serialPort.open(subscribe_AfterOpen);
         } else if(spInfo.isOpen !== true) {
-            console.log('--- remove all listeners');
+            console.log('  remove all listeners, then open');
             spInfo.serialPort.removeAllListeners();
             spInfo.serialPort.open(subscribe_AfterOpen);
 
         } else {
+            console.log('  already open');
             //subscribe_AfterOpen();
-            if(spInfo.clients.filter(function(client) { return client.socket.id === btSocket.id; }).length === 0)
+            if(spInfo.clients.filter(function(client) { return client.socket.id === btSocket.id; }).length === 0) {
+                console.log('  adding to clients list');
                 spInfo.clients.push({socket: btSocket});
+            } else {
+                console.log('  already on clients list');
+            }
             clientCallback({});
         }
 
@@ -283,37 +295,11 @@ function giveSocketBluetoothEvents(btSocket) {
     btSocket.on('sendOnPort', function(data, clientCallback) {
         console.log('sendOnPort', data);
         sendOnPort(data.portName, data.serialData, clientCallback);
-        /*
-        spInfo = serialPorts[data.portName];
-        if(!spInfo) {
-            console.log('no spInfo');
-            clientCallback({err: 'Port \'' + data.portName + '\' unknown'});
-        } else if(spInfo.isOpen !== true) {
-            console.log('not open');
-            clientCallback({err: 'Port \'' + data.portName + '\' is not open'});
-        } else {
-            console.log('sending');
-            spInfo.serialPort.write(data.serialData);
-            console.log('other sent on each client');
-            spInfo.clients.forEach(function(client) {
-                console.log('  loop client');
-                if(client.socket !== btSocket) {
-                    console.log('    need to send!');
-                    client.socket.emit('otherSent', {
-                        portName: data.portName,
-                        serialData: data.serialData
-                    });
-                }
-            });
-            clientCallback();
-        }
-        */
     });
 
     // send and clear all of the sendOnDisconnect messages for a socket
     // this can happen on an actual disconnect or when request by a socket flushOnDisconnect
     function flushOnDisconnect(forSocket) {
-        //console.log('disconnect host ', socketHostname);
         var filterToSocket = function(client) { return client.socket.id === forSocket.id; };
         //var filterOutSocket = function(client) { return client.socket.id !== socket.id; };
         var makeSend = function(spName) {
@@ -402,8 +388,6 @@ socketIO.sockets.on('connection', function(socket) {
 
     giveSocketBluetoothEvents(socket);
 
-    // send initial greeting with hosename
-
     socket.emit('greeting', {
         hostname: os.hostname(),
         webServer: webServer
@@ -458,7 +442,7 @@ function createFullPath(filePath) {
 
 app.use(express.bodyParser());
 app.use(express.cookieParser());
-app.use(express.session({ secret: "whaaaaatS?", store: mongoStore }));
+//app.use(express.session({ secret: "whaaaaatS?", store: mongoStore }));
 
 
 function fetchCacheAndSend(req, res, next, overrideFile) {
@@ -551,7 +535,7 @@ console.log(clearString);
 //console.log("\n\n");
 console.log("This server is at http://" + localIP + ":" + httpServerPort);
 console.log('  Connecting to web server at ' + webServer + '...');
-console.log("\n\n");
+//console.log("\n\n");
 
 
 var clientMonitor = function() {
@@ -564,7 +548,7 @@ var clientMonitor = function() {
 
     for (var spName in serialPorts) {
         spInfo = serialPorts[spName];
-        outputString = spName + ': ' + spInfo.clients.length;
+        outputString = spName + '(' + (spInfo.isOpen ? 'open' : 'closed') + ') : ' + spInfo.clients.length;
         spInfo.clients.forEach(stringBuildFunction);
         console.log(outputString);
 
